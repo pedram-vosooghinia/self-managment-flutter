@@ -1,0 +1,564 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
+import 'package:uuid/uuid.dart';
+import '../../../data/models/goal_model.dart';
+import '../../providers/goal_provider.dart';
+import '../../providers/reminder_provider.dart';
+import '../../providers/alarm_sound_provider.dart';
+import '../../../data/models/reminder_model.dart';
+import '../alarm_sounds/alarm_sounds_screen.dart';
+
+class AddEditGoalScreen extends StatefulWidget {
+  final GoalModel? goal;
+
+  const AddEditGoalScreen({super.key, this.goal});
+
+  @override
+  State<AddEditGoalScreen> createState() => _AddEditGoalScreenState();
+}
+
+class _AddEditGoalScreenState extends State<AddEditGoalScreen> {
+  late TextEditingController _titleController;
+  late TextEditingController _descriptionController;
+  late TextEditingController _notesController;
+  late TextEditingController _subTaskController;
+
+  GoalType _goalType = GoalType.shortTerm;
+  DateTime? _targetDate;
+  DateTime? _reminderDateTime;
+  String? _alarmSoundId;
+  List<SubTask> _subTasks = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _titleController = TextEditingController(text: widget.goal?.title ?? '');
+    _descriptionController = TextEditingController(
+      text: widget.goal?.description ?? '',
+    );
+    _notesController = TextEditingController(text: widget.goal?.notes ?? '');
+    _subTaskController = TextEditingController();
+
+    if (widget.goal != null) {
+      _goalType = widget.goal!.type;
+      _targetDate = widget.goal!.targetDate;
+      _reminderDateTime = widget.goal!.reminderDateTime;
+      _alarmSoundId = widget.goal!.alarmSoundId;
+      _subTasks = List.from(widget.goal!.subTasks);
+    }
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descriptionController.dispose();
+    _notesController.dispose();
+    _subTaskController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isEditing = widget.goal != null;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(isEditing ? 'Edit Goal' : 'Add Goal'),
+        actions: [
+          if (isEditing)
+            IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: () {
+                _showDeleteDialog(context);
+              },
+            ),
+        ],
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          TextField(
+            controller: _titleController,
+            decoration: const InputDecoration(
+              labelText: 'Title',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.flag),
+            ),
+            textCapitalization: TextCapitalization.sentences,
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _descriptionController,
+            decoration: const InputDecoration(
+              labelText: 'Description (optional)',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.description),
+            ),
+            maxLines: 2,
+            textCapitalization: TextCapitalization.sentences,
+          ),
+          const SizedBox(height: 16),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Goal Type',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 12),
+                  SegmentedButton<GoalType>(
+                    segments: const [
+                      ButtonSegment(
+                        value: GoalType.shortTerm,
+                        label: Text('Short Term'),
+                        icon: Icon(Icons.calendar_today),
+                      ),
+                      ButtonSegment(
+                        value: GoalType.longTerm,
+                        label: Text('Long Term'),
+                        icon: Icon(Icons.calendar_month),
+                      ),
+                    ],
+                    selected: {_goalType},
+                    onSelectionChanged: (Set<GoalType> selected) {
+                      setState(() {
+                        _goalType = selected.first;
+                      });
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Card(
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.calendar_today),
+                  title: const Text('Target Date'),
+                  subtitle: _targetDate != null
+                      ? Text(DateFormat('MMM dd, yyyy').format(_targetDate!))
+                      : const Text('No date set'),
+                  trailing: _targetDate != null
+                      ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            setState(() {
+                              _targetDate = null;
+                            });
+                          },
+                        )
+                      : null,
+                  onTap: _pickTargetDate,
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.access_time),
+                  title: const Text('Reminder'),
+                  subtitle: _reminderDateTime != null
+                      ? Text(
+                          DateFormat(
+                            'MMM dd, yyyy - HH:mm',
+                          ).format(_reminderDateTime!),
+                        )
+                      : const Text('No reminder set'),
+                  trailing: _reminderDateTime != null
+                      ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            setState(() {
+                              _reminderDateTime = null;
+                              _alarmSoundId = null;
+                            });
+                          },
+                        )
+                      : null,
+                  onTap: _pickReminderDateTime,
+                ),
+                if (_reminderDateTime != null) ...[
+                  const Divider(height: 1),
+                  Consumer<AlarmSoundProvider>(
+                    builder: (context, alarmSoundProvider, child) {
+                      final selectedSound = _alarmSoundId != null
+                          ? alarmSoundProvider.getAlarmSoundById(_alarmSoundId!)
+                          : null;
+                      final soundName =
+                          selectedSound?.name ?? 'Select alarm sound';
+
+                      return ListTile(
+                        leading: const Icon(Icons.music_note),
+                        title: const Text('Alarm Sound'),
+                        subtitle: Text(soundName),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: _selectAlarmSound,
+                      );
+                    },
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Subtasks',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                      ),
+                      FilledButton.icon(
+                        onPressed: _showAddSubTaskDialog,
+                        icon: const Icon(Icons.add, size: 18),
+                        label: const Text('Add'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  if (_subTasks.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Center(child: Text('No subtasks yet')),
+                    )
+                  else
+                    ..._subTasks.map((subTask) {
+                      return CheckboxListTile(
+                        value: subTask.isCompleted,
+                        onChanged: (value) {
+                          setState(() {
+                            final index = _subTasks.indexOf(subTask);
+                            _subTasks[index] = subTask.copyWith(
+                              isCompleted: value ?? false,
+                            );
+                          });
+                        },
+                        title: Text(subTask.title),
+                        secondary: IconButton(
+                          icon: const Icon(Icons.delete_outline),
+                          onPressed: () {
+                            setState(() {
+                              _subTasks.remove(subTask);
+                            });
+                          },
+                        ),
+                      );
+                    }),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _notesController,
+            decoration: const InputDecoration(
+              labelText: 'Notes (optional)',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.notes),
+            ),
+            maxLines: 4,
+            textCapitalization: TextCapitalization.sentences,
+          ),
+          const SizedBox(height: 24),
+          FilledButton.icon(
+            onPressed: _saveGoal,
+            icon: const Icon(Icons.save),
+            label: Text(isEditing ? 'Update Goal' : 'Create Goal'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddSubTaskDialog() {
+    _subTaskController.clear();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Add Subtask'),
+        content: TextField(
+          controller: _subTaskController,
+          decoration: const InputDecoration(
+            labelText: 'Subtask title',
+            border: OutlineInputBorder(),
+          ),
+          textCapitalization: TextCapitalization.sentences,
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (_subTaskController.text.trim().isNotEmpty) {
+                setState(() {
+                  _subTasks.add(
+                    SubTask(
+                      id: const Uuid().v4(),
+                      title: _subTaskController.text.trim(),
+                    ),
+                  );
+                });
+                Navigator.pop(context);
+              }
+            },
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _pickTargetDate() async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: _targetDate ?? DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365 * 10)),
+    );
+
+    if (date != null) {
+      setState(() {
+        _targetDate = date;
+      });
+    }
+  }
+
+  Future<void> _pickReminderDateTime() async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: _reminderDateTime ?? _targetDate ?? DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365 * 10)),
+    );
+
+    if (date != null && mounted) {
+      final time = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.fromDateTime(
+          _reminderDateTime ?? DateTime.now(),
+        ),
+      );
+
+      if (time != null) {
+        setState(() {
+          _reminderDateTime = DateTime(
+            date.year,
+            date.month,
+            date.day,
+            time.hour,
+            time.minute,
+          );
+        });
+      }
+    }
+  }
+
+  Future<void> _selectAlarmSound() async {
+    final alarmSoundProvider = context.read<AlarmSoundProvider>();
+    final alarmSounds = alarmSoundProvider.alarmSounds;
+
+    if (alarmSounds.isEmpty) {
+      // No alarm sounds available, navigate to alarm sounds screen
+      final result = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('No Alarm Sounds'),
+          content: const Text(
+            'You haven\'t added any alarm sounds yet. Would you like to add one now?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Add Sounds'),
+            ),
+          ],
+        ),
+      );
+
+      if (result == true) {
+        if (!mounted) return;
+        await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const AlarmSoundsScreen()),
+        );
+        if (!mounted) return;
+        // Reload alarm sounds after returning
+        alarmSoundProvider.loadAlarmSounds();
+      }
+      return;
+    }
+
+    // Show alarm sound picker
+    String? tempSelectedSound = _alarmSoundId;
+    final selectedSound = await showDialog<String>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Select Alarm Sound'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: alarmSounds.length,
+              itemBuilder: (context, index) {
+                final sound = alarmSounds[index];
+
+                final isSelected = sound.id == tempSelectedSound;
+                return ListTile(
+                  leading: Icon(
+                    sound.isSystemSound
+                        ? Icons.notifications_active
+                        : Icons.music_note,
+                  ),
+                  title: Text(sound.name),
+                  subtitle: Text(
+                    sound.isSystemSound ? 'System Sound' : 'Custom Sound',
+                  ),
+                  trailing: isSelected ? const Icon(Icons.check) : null,
+                  onTap: () {
+                    Navigator.pop(context, sound.id);
+                  },
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                // Navigate to add alarm sound
+                Navigator.pop(context);
+                if (!context.mounted) return;
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AlarmSoundsScreen(),
+                  ),
+                );
+              },
+              child: const Text('Manage Sounds'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (selectedSound != null) {
+      setState(() {
+        _alarmSoundId = selectedSound;
+      });
+    }
+  }
+
+  void _saveGoal() {
+    if (_titleController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please enter a title')));
+      return;
+    }
+
+    final goalProvider = context.read<GoalProvider>();
+    final reminderProvider = context.read<ReminderProvider>();
+
+    if (widget.goal != null) {
+      // Update existing goal
+      final updatedGoal = widget.goal!.copyWith(
+        title: _titleController.text.trim(),
+        description: _descriptionController.text.trim().isEmpty
+            ? null
+            : _descriptionController.text.trim(),
+        type: _goalType,
+        targetDate: _targetDate,
+        reminderDateTime: _reminderDateTime,
+        alarmSoundId: _alarmSoundId,
+        notes: _notesController.text.trim().isEmpty
+            ? null
+            : _notesController.text.trim(),
+        subTasks: _subTasks,
+      );
+      goalProvider.updateGoal(updatedGoal);
+
+      // Update reminder if needed
+      if (_reminderDateTime != null) {
+        // Get the alarm sound file path from the ID
+        final alarmSoundPath = _alarmSoundId != null
+            ? context
+                  .read<AlarmSoundProvider>()
+                  .getAlarmSoundById(_alarmSoundId!)
+                  ?.filePath
+            : null;
+
+        reminderProvider.addReminder(
+          itemId: updatedGoal.id,
+          type: ReminderType.goal,
+          scheduledDateTime: _reminderDateTime!,
+          title: 'Goal Reminder: ${updatedGoal.title}',
+          body: updatedGoal.description,
+          alarmSoundPath: alarmSoundPath,
+        );
+      }
+    } else {
+      // Create new goal
+      goalProvider.addGoal(
+        title: _titleController.text.trim(),
+        description: _descriptionController.text.trim().isEmpty
+            ? null
+            : _descriptionController.text.trim(),
+        type: _goalType,
+        targetDate: _targetDate,
+        reminderDateTime: _reminderDateTime,
+        alarmSoundId: _alarmSoundId,
+        notes: _notesController.text.trim().isEmpty
+            ? null
+            : _notesController.text.trim(),
+      );
+    }
+
+    Navigator.pop(context);
+  }
+
+  void _showDeleteDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Goal'),
+        content: const Text('Are you sure you want to delete this goal?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              context.read<GoalProvider>().deleteGoal(widget.goal!.id);
+              Navigator.pop(context); // Close dialog
+              Navigator.pop(context); // Close screen
+            },
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+}
