@@ -18,7 +18,7 @@ class _TasksScreenState extends State<TasksScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
@@ -36,17 +36,15 @@ class _TasksScreenState extends State<TasksScreen>
           controller: _tabController,
           isScrollable: true,
           tabs: const [
-            Tab(text: 'All'),
-            Tab(text: 'Today'),
-            Tab(text: 'Upcoming'),
-            Tab(text: 'Completed'),
+            Tab(text: 'وظایف فعلی'),
+            Tab(text: 'یادآوری‌های آینده'),
+            Tab(text: 'انجام شده'),
           ],
         ),
       ),
       body: TabBarView(
         controller: _tabController,
         children: [
-          _buildTaskList('all'),
           _buildTaskList('today'),
           _buildTaskList('upcoming'),
           _buildTaskList('completed'),
@@ -56,13 +54,11 @@ class _TasksScreenState extends State<TasksScreen>
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (context) => const AddEditTaskScreen(),
-            ),
+            MaterialPageRoute(builder: (context) => const AddEditTaskScreen()),
           );
         },
         icon: const Icon(Icons.add),
-        label: const Text('Add Task'),
+        label: const Text('افزودن وظیفه'),
       ),
     );
   }
@@ -82,21 +78,15 @@ class _TasksScreenState extends State<TasksScreen>
         }
 
         if (tasks.isEmpty) {
-          return Center(
+          return const Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.task_outlined,
-                  size: 64,
-                  color: Theme.of(context).colorScheme.outline,
-                ),
-                const SizedBox(height: 16),
+                Icon(Icons.task_outlined, size: 64, color: Colors.grey),
+                SizedBox(height: 16),
                 Text(
-                  'No tasks ${filter == 'all' ? '' : filter}',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.outline,
-                      ),
+                  'هیچ وظیفه‌ای نداریم',
+                  style: TextStyle(fontSize: 16, color: Colors.grey),
                 ),
               ],
             ),
@@ -135,23 +125,24 @@ class _TasksScreenState extends State<TasksScreen>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Task'),
-        content: const Text('Are you sure you want to delete this task?'),
+        title: const Text('حذف وظیفه'),
+        content: const Text(
+          'آیا مطمئن هستید که می‌خواهید این وظیفه را حذف کنید؟',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: const Text('انصراف'),
           ),
           FilledButton(
             onPressed: () {
               context.read<TaskProvider>().deleteTask(taskId);
               Navigator.pop(context);
             },
-            child: const Text('Delete'),
+            child: const Text('حذف'),
           ),
         ],
       ),
     );
   }
 }
-

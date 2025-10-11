@@ -1,3 +1,4 @@
+// ==================== واردات کتابخانه‌ها ====================
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/reminder_provider.dart';
@@ -5,45 +6,52 @@ import '../../providers/task_provider.dart';
 import '../../providers/goal_provider.dart';
 import '../../providers/alarm_sound_provider.dart';
 import '../alarm_sounds/alarm_sounds_screen.dart';
+import '../debug/alarm_debug_screen.dart';
 
+// ==================== صفحه تنظیمات ====================
+/// صفحه تنظیمات برنامه که شامل تنظیمات مختلف، مدیریت داده‌ها و اطلاعات برنامه است
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Settings'),
-      ),
+      // نوار بالای صفحه
+      appBar: AppBar(title: const Text('تنظیمات')),
       body: ListView(
         children: [
           const SizedBox(height: 8),
+
+          // ==================== بخش یادآورها و آلارم‌ها ====================
           _buildSection(
             context,
-            title: 'Reminders',
+            title: 'یادآورها و آلارم‌ها',
             children: [
+              // نمایش تعداد یادآورهای فعال
               Consumer<ReminderProvider>(
                 builder: (context, reminderProvider, child) {
                   final upcomingReminders = reminderProvider.upcomingReminders;
                   return ListTile(
                     leading: const Icon(Icons.notifications_active),
-                    title: const Text('Active Reminders'),
-                    subtitle: Text('${upcomingReminders.length} upcoming'),
-                    trailing: const Icon(Icons.chevron_right),
+                    title: const Text('یادآورهای فعال'),
+                    subtitle: Text('${upcomingReminders.length} یادآور آینده'),
+                    trailing: const Icon(Icons.chevron_left),
                     onTap: () {
                       _showRemindersDialog(context, upcomingReminders);
                     },
                   );
                 },
               ),
+
+              // مدیریت صداهای آلارم
               Consumer<AlarmSoundProvider>(
                 builder: (context, alarmSoundProvider, child) {
                   final soundsCount = alarmSoundProvider.alarmSounds.length;
                   return ListTile(
                     leading: const Icon(Icons.music_note),
-                    title: const Text('Alarm Sounds'),
-                    subtitle: Text('$soundsCount sound${soundsCount != 1 ? 's' : ''} available'),
-                    trailing: const Icon(Icons.chevron_right),
+                    title: const Text('صداهای آلارم'),
+                    subtitle: Text('$soundsCount صدا موجود است'),
+                    trailing: const Icon(Icons.chevron_left),
                     onTap: () {
                       Navigator.push(
                         context,
@@ -55,44 +63,62 @@ class SettingsScreen extends StatelessWidget {
                   );
                 },
               ),
+
+              // ابزار عیب‌یابی آلارم‌ها
+              ListTile(
+                leading: const Icon(Icons.bug_report),
+                title: const Text('عیب‌یابی آلارم‌ها'),
+                subtitle: const Text('تست و رفع مشکلات آلارم'),
+                trailing: const Icon(Icons.chevron_left),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AlarmDebugScreen(),
+                    ),
+                  );
+                },
+              ),
             ],
           ),
+
+          // ==================== بخش مدیریت داده‌ها ====================
           _buildSection(
             context,
-            title: 'Data',
+            title: 'مدیریت داده‌ها',
             children: [
               Consumer2<TaskProvider, GoalProvider>(
                 builder: (context, taskProvider, goalProvider, child) {
                   final tasksCount = taskProvider.tasks.length;
                   final goalsCount = goalProvider.goals.length;
-                  
+
                   return Column(
                     children: [
+                      // نمایش اطلاعات ذخیره‌سازی
                       ListTile(
                         leading: const Icon(Icons.storage),
-                        title: const Text('Storage'),
-                        subtitle: Text('$tasksCount tasks, $goalsCount goals'),
+                        title: const Text('فضای ذخیره‌سازی'),
+                        subtitle: Text('$tasksCount وظیفه، $goalsCount هدف'),
                       ),
+
+                      // پاک کردن وظایف انجام شده
                       ListTile(
                         leading: const Icon(Icons.delete_sweep),
-                        title: const Text('Clear Completed Tasks'),
-                        trailing: const Icon(Icons.chevron_right),
+                        title: const Text('پاک کردن وظایف انجام شده'),
+                        trailing: const Icon(Icons.chevron_left),
                         onTap: () {
                           _showClearCompletedDialog(context);
                         },
                       ),
+
+                      // پاک کردن تمام داده‌ها (خطرناک!)
                       ListTile(
-                        leading: Icon(
-                          Icons.warning,
-                          color: Theme.of(context).colorScheme.error,
+                        leading: const Icon(Icons.warning, color: Colors.red),
+                        title: const Text(
+                          'پاک کردن همه داده‌ها',
+                          style: TextStyle(color: Colors.red),
                         ),
-                        title: Text(
-                          'Clear All Data',
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.error,
-                          ),
-                        ),
-                        trailing: const Icon(Icons.chevron_right),
+                        trailing: const Icon(Icons.chevron_left),
                         onTap: () {
                           _showClearAllDataDialog(context);
                         },
@@ -103,28 +129,32 @@ class SettingsScreen extends StatelessWidget {
               ),
             ],
           ),
+          // ==================== بخش درباره برنامه ====================
           _buildSection(
             context,
-            title: 'About',
+            title: 'درباره برنامه',
             children: [
+              // نسخه برنامه
               const ListTile(
                 leading: Icon(Icons.info),
-                title: Text('Version'),
+                title: Text('نسخه'),
                 subtitle: Text('1.0.0'),
               ),
+
+              // اطلاعات سازنده
               ListTile(
                 leading: const Icon(Icons.code),
-                title: const Text('Built with Flutter'),
+                title: const Text('ساخته شده با Flutter'),
                 subtitle: const Text('Material Design 3'),
                 onTap: () {
                   showAboutDialog(
                     context: context,
-                    applicationName: 'Self Management',
+                    applicationName: 'مدیریت شخصی',
                     applicationVersion: '1.0.0',
                     applicationIcon: const Icon(Icons.task_alt, size: 48),
                     children: [
                       const Text(
-                        'A beautiful and minimal task and goal management app.',
+                        'برنامه‌ای زیبا و ساده برای مدیریت وظایف و اهداف شخصی',
                       ),
                     ],
                   );
@@ -137,6 +167,8 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
+  // ==================== متد کمکی: ساخت بخش‌های تنظیمات ====================
+  /// ساخت یک بخش در صفحه تنظیمات با عنوان و لیست آیتم‌ها
   Widget _buildSection(
     BuildContext context, {
     required String title,
@@ -149,9 +181,11 @@ class SettingsScreen extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
           child: Text(
             title,
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: Theme.of(context).colorScheme.primary,
-                ),
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: Colors.blue,
+            ),
           ),
         ),
         Card(
@@ -163,15 +197,17 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
+  // ==================== متد کمکی: نمایش دیالوگ یادآورها ====================
+  /// نمایش لیست یادآورهای آینده در یک دیالوگ
   void _showRemindersDialog(BuildContext context, List reminders) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Upcoming Reminders'),
+        title: const Text('یادآورهای آینده'),
         content: SizedBox(
           width: double.maxFinite,
           child: reminders.isEmpty
-              ? const Text('No upcoming reminders')
+              ? const Text('هیچ یادآور آینده‌ای وجود ندارد')
               : ListView.builder(
                   shrinkWrap: true,
                   itemCount: reminders.length,
@@ -187,25 +223,27 @@ class SettingsScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
+            child: const Text('بستن'),
           ),
         ],
       ),
     );
   }
 
+  // ==================== متد کمکی: دیالوگ حذف وظایف انجام شده ====================
+  /// نمایش دیالوگ تأیید برای حذف وظایف انجام شده
   void _showClearCompletedDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Clear Completed Tasks'),
+        title: const Text('پاک کردن وظایف انجام شده'),
         content: const Text(
-          'This will permanently delete all completed tasks. This action cannot be undone.',
+          'این عملیات تمام وظایف انجام شده را به طور دائمی حذف می‌کند. این عمل قابل بازگشت نیست.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: const Text('انصراف'),
           ),
           FilledButton(
             onPressed: () {
@@ -217,29 +255,31 @@ class SettingsScreen extends StatelessWidget {
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('Deleted ${completedTasks.length} tasks'),
+                  content: Text('${completedTasks.length} وظیفه حذف شد'),
                 ),
               );
             },
-            child: const Text('Clear'),
+            child: const Text('پاک کردن'),
           ),
         ],
       ),
     );
   }
 
+  // ==================== متد کمکی: دیالوگ حذف تمام داده‌ها ====================
+  /// نمایش دیالوگ تأیید برای حذف تمام داده‌های برنامه (خطرناک!)
   void _showClearAllDataDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Clear All Data'),
+        title: const Text('پاک کردن همه داده‌ها'),
         content: const Text(
-          'This will permanently delete ALL tasks, goals, and reminders. This action cannot be undone.',
+          'این عملیات تمام وظایف، اهداف و یادآورها را به طور دائمی حذف می‌کند. این عمل قابل بازگشت نیست.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: const Text('انصراف'),
           ),
           FilledButton(
             onPressed: () {
@@ -247,16 +287,13 @@ class SettingsScreen extends StatelessWidget {
               context.read<GoalProvider>().deleteAllGoals();
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('All data cleared'),
-                ),
+                const SnackBar(content: Text('تمام داده‌ها پاک شد')),
               );
             },
-            child: const Text('Clear All'),
+            child: const Text('پاک کردن همه'),
           ),
         ],
       ),
     );
   }
 }
-

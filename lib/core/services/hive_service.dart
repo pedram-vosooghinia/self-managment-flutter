@@ -20,7 +20,6 @@ class HiveService {
     Hive.registerAdapter(TaskModelAdapter());
     Hive.registerAdapter(GoalModelAdapter());
     Hive.registerAdapter(GoalTypeAdapter());
-    Hive.registerAdapter(SubTaskAdapter());
     Hive.registerAdapter(ReminderModelAdapter());
     Hive.registerAdapter(ReminderTypeAdapter());
     Hive.registerAdapter(AlarmSoundModelAdapter());
@@ -49,4 +48,3 @@ class HiveService {
     await Hive.close();
   }
 }
-

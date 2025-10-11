@@ -34,9 +34,7 @@ class _AlarmSoundsScreenState extends State<AlarmSoundsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Alarm Sounds'),
-      ),
+      appBar: AppBar(title: const Text('Alarm Sounds')),
       body: Consumer<AlarmSoundProvider>(
         builder: (context, provider, child) {
           if (provider.alarmSounds.isEmpty) {
@@ -44,15 +42,14 @@ class _AlarmSoundsScreenState extends State<AlarmSoundsScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.music_off,
-                    size: 64,
-                    color: Theme.of(context).colorScheme.secondary,
-                  ),
+                  Icon(Icons.music_off, size: 64, color: Colors.blue),
                   const SizedBox(height: 16),
                   Text(
                     'No alarm sounds yet',
-                    style: Theme.of(context).textTheme.titleLarge,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   const Text('Add your first alarm sound to get started'),
@@ -90,11 +87,11 @@ class _AlarmSoundsScreenState extends State<AlarmSoundsScreen> {
                     children: [
                       Text(
                         sound.isSystemSound ? 'System Sound' : 'Custom Sound',
-                        style: Theme.of(context).textTheme.bodySmall,
+                        style: const TextStyle(fontSize: 12),
                       ),
                       Text(
                         'Added ${DateFormat('MMM dd, yyyy').format(sound.createdAt)}',
-                        style: Theme.of(context).textTheme.bodySmall,
+                        style: const TextStyle(fontSize: 12),
                       ),
                     ],
                   ),
@@ -102,9 +99,7 @@ class _AlarmSoundsScreenState extends State<AlarmSoundsScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
-                        icon: Icon(
-                          isPlaying ? Icons.stop : Icons.play_arrow,
-                        ),
+                        icon: Icon(isPlaying ? Icons.stop : Icons.play_arrow),
                         onPressed: () => _togglePlaySound(sound),
                       ),
                       PopupMenuButton(
@@ -164,7 +159,7 @@ class _AlarmSoundsScreenState extends State<AlarmSoundsScreen> {
     } else {
       // Play sound
       await _audioPlayer.stop();
-      
+
       if (sound.filePath == 'default' || sound.isSystemSound) {
         // For system sounds, we can't preview them easily
         // Show a message instead
@@ -194,9 +189,9 @@ class _AlarmSoundsScreenState extends State<AlarmSoundsScreen> {
           });
         } catch (e) {
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Error playing sound: $e')),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text('Error playing sound: $e')));
           }
         }
       }
@@ -240,7 +235,9 @@ class _AlarmSoundsScreenState extends State<AlarmSoundsScreen> {
                     });
                   },
                   title: const Text('Use System Default Sound'),
-                  subtitle: const Text('Uses the device default notification sound'),
+                  subtitle: const Text(
+                    'Uses the device default notification sound',
+                  ),
                 ),
                 if (!isSystemSound) ...[
                   const SizedBox(height: 8),
@@ -268,7 +265,7 @@ class _AlarmSoundsScreenState extends State<AlarmSoundsScreen> {
                     const SizedBox(height: 8),
                     Text(
                       selectedFilePath!.split('/').last,
-                      style: Theme.of(context).textTheme.bodySmall,
+                      style: const TextStyle(fontSize: 12),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -294,17 +291,19 @@ class _AlarmSoundsScreenState extends State<AlarmSoundsScreen> {
                 if (!isSystemSound && selectedFilePath == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Please select an audio file or use system sound'),
+                      content: Text(
+                        'Please select an audio file or use system sound',
+                      ),
                     ),
                   );
                   return;
                 }
 
                 context.read<AlarmSoundProvider>().addAlarmSound(
-                      name: nameController.text.trim(),
-                      filePath: selectedFilePath ?? 'default',
-                      isSystemSound: isSystemSound,
-                    );
+                  name: nameController.text.trim(),
+                  filePath: selectedFilePath ?? 'default',
+                  isSystemSound: isSystemSound,
+                );
 
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -393,4 +392,3 @@ class _AlarmSoundsScreenState extends State<AlarmSoundsScreen> {
     );
   }
 }
-

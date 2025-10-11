@@ -40,30 +40,20 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
           }
 
           if (workouts.isEmpty) {
-            return Center(
+            return const Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.fitness_center,
-                    size: 64,
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.primary.withValues(alpha: 0.5),
-                  ),
-                  const SizedBox(height: 16),
+                  Icon(Icons.fitness_center, size: 64, color: Colors.grey),
+                  SizedBox(height: 16),
                   Text(
                     'No workouts yet',
-                    style: Theme.of(context).textTheme.titleLarge,
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   Text(
                     'Tap the + button to add your first workout',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withValues(alpha: 0.6),
-                    ),
+                    style: TextStyle(fontSize: 14, color: Colors.grey),
                   ),
                 ],
               ),
@@ -133,8 +123,10 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                             children: [
                               Text(
                                 workout.title,
-                                style: Theme.of(context).textTheme.titleMedium
-                                    ?.copyWith(fontWeight: FontWeight.bold),
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -142,7 +134,7 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                               if (workout.description != null)
                                 Text(
                                   workout.description!,
-                                  style: Theme.of(context).textTheme.bodySmall,
+                                  style: const TextStyle(fontSize: 12),
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -150,47 +142,33 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                               Row(
                                 children: [
                                   if (workout.durationOrReps != null) ...[
-                                    Icon(
+                                    const Icon(
                                       Icons.timer,
                                       size: 16,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface
-                                          .withValues(alpha: 0.6),
+                                      color: Colors.grey,
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
                                       workout.durationOrReps!,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodySmall
-                                          ?.copyWith(
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .onSurface
-                                                .withValues(alpha: 0.6),
-                                          ),
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey,
+                                      ),
                                     ),
                                     const SizedBox(width: 16),
                                   ],
-                                  Icon(
+                                  const Icon(
                                     Icons.check_circle,
                                     size: 16,
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurface
-                                        .withValues(alpha: 0.6),
+                                    color: Colors.grey,
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
                                     '${workout.timesCompleted}x',
-                                    style: Theme.of(context).textTheme.bodySmall
-                                        ?.copyWith(
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .onSurface
-                                              .withValues(alpha: 0.6),
-                                        ),
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -268,10 +246,7 @@ class WorkoutSearchDelegate extends SearchDelegate<String> {
 
     if (results.isEmpty) {
       return Center(
-        child: Text(
-          'No workouts found',
-          style: Theme.of(context).textTheme.bodyLarge,
-        ),
+        child: const Text('No workouts found', style: TextStyle(fontSize: 18)),
       );
     }
 

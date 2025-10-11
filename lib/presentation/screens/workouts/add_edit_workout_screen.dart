@@ -24,10 +24,12 @@ class _AddEditWorkoutScreenState extends State<AddEditWorkoutScreen> {
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.workout?.title ?? '');
-    _descriptionController =
-        TextEditingController(text: widget.workout?.description ?? '');
-    _durationOrRepsController =
-        TextEditingController(text: widget.workout?.durationOrReps ?? '');
+    _descriptionController = TextEditingController(
+      text: widget.workout?.description ?? '',
+    );
+    _durationOrRepsController = TextEditingController(
+      text: widget.workout?.durationOrReps ?? '',
+    );
     _imagePaths = List<String>.from(widget.workout?.imagePaths ?? []);
   }
 
@@ -96,16 +98,12 @@ class _AddEditWorkoutScreenState extends State<AddEditWorkoutScreen> {
           // Images Section
           Text(
             'Exercise Images',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Text(
             'Add images showing how to perform the exercise',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-                ),
+            style: const TextStyle(fontSize: 12, color: Colors.grey),
           ),
           const SizedBox(height: 16),
           // Image Grid
@@ -190,9 +188,9 @@ class _AddEditWorkoutScreenState extends State<AddEditWorkoutScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error picking images: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error picking images: $e')));
       }
     }
   }
@@ -261,4 +259,3 @@ class _AddEditWorkoutScreenState extends State<AddEditWorkoutScreen> {
     );
   }
 }
-

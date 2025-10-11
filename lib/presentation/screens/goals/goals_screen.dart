@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../../providers/goal_provider.dart';
 import '../../widgets/goal_card.dart';
 import 'add_edit_goal_screen.dart';
-//import '../../../data/models/goal_model.dart';
 
 class GoalsScreen extends StatefulWidget {
   const GoalsScreen({super.key});
@@ -32,24 +31,22 @@ class _GoalsScreenState extends State<GoalsScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Goals'),
+        title: const Text('هدف ها'),
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
           tabs: const [
-            Tab(text: 'All'),
-            Tab(text: 'Short Term'),
-            Tab(text: 'Long Term'),
-            Tab(text: 'Completed'),
+            Tab(text: 'کوتاه مدت'),
+            Tab(text: 'بلند مدت'),
+            Tab(text: 'تکمیل شده'),
           ],
         ),
       ),
       body: TabBarView(
         controller: _tabController,
         children: [
-          _buildGoalList('all'),
-          _buildGoalList('short'),
-          _buildGoalList('long'),
+          _buildGoalList('shortTerm'),
+          _buildGoalList('longTerm'),
           _buildGoalList('completed'),
         ],
       ),
@@ -57,13 +54,11 @@ class _GoalsScreenState extends State<GoalsScreen>
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (context) => const AddEditGoalScreen(),
-            ),
+            MaterialPageRoute(builder: (context) => const AddEditGoalScreen()),
           );
         },
         icon: const Icon(Icons.add),
-        label: const Text('Add Goal'),
+        label: const Text('اضافه کردن هدف'),
       ),
     );
   }
@@ -72,8 +67,8 @@ class _GoalsScreenState extends State<GoalsScreen>
     return Consumer<GoalProvider>(
       builder: (context, goalProvider, child) {
         final goals = switch (filter) {
-          'short' => goalProvider.shortTermGoals,
-          'long' => goalProvider.longTermGoals,
+          'shortTerm' => goalProvider.shortTermGoals,
+          'longTerm' => goalProvider.longTermGoals,
           'completed' => goalProvider.completedGoals,
           _ => goalProvider.activeGoals,
         };
@@ -87,17 +82,11 @@ class _GoalsScreenState extends State<GoalsScreen>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.flag_outlined,
-                  size: 64,
-                  color: Theme.of(context).colorScheme.outline,
-                ),
+                const Icon(Icons.flag_outlined, size: 64, color: Colors.grey),
                 const SizedBox(height: 16),
                 Text(
-                  'No ${filter == 'all' ? '' : filter} goals',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.outline,
-                      ),
+                  'هیچ هدفی نداریم',
+                  style: const TextStyle(fontSize: 16, color: Colors.grey),
                 ),
               ],
             ),
@@ -136,23 +125,22 @@ class _GoalsScreenState extends State<GoalsScreen>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Goal'),
-        content: const Text('Are you sure you want to delete this goal?'),
+        title: const Text('حذف هدف'),
+        content: const Text('آیا مطمئن هستید که می‌خواهید این هدف را حذف کنید؟'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: const Text('انصراف'),
           ),
           FilledButton(
             onPressed: () {
               context.read<GoalProvider>().deleteGoal(goalId);
               Navigator.pop(context);
             },
-            child: const Text('Delete'),
+            child: const Text('حذف'),
           ),
         ],
       ),
     );
   }
 }
-

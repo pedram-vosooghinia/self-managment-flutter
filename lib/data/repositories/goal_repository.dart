@@ -30,9 +30,7 @@ class GoalRepository {
   }
 
   List<GoalModel> getLongTermGoals() {
-    return _box.values
-        .where((goal) => goal.type == GoalType.longTerm)
-        .toList();
+    return _box.values.where((goal) => goal.type == GoalType.longTerm).toList();
   }
 
   List<GoalModel> getCompletedGoals() {
@@ -56,43 +54,6 @@ class GoalRepository {
     }
   }
 
-  Future<void> addSubTask(String goalId, SubTask subTask) async {
-    final goal = _box.get(goalId);
-    if (goal != null) {
-      goal.subTasks.add(subTask);
-      await goal.save();
-    }
-  }
-
-  Future<void> updateSubTask(String goalId, SubTask updatedSubTask) async {
-    final goal = _box.get(goalId);
-    if (goal != null) {
-      final index = goal.subTasks.indexWhere((st) => st.id == updatedSubTask.id);
-      if (index != -1) {
-        goal.subTasks[index] = updatedSubTask;
-        await goal.save();
-      }
-    }
-  }
-
-  Future<void> deleteSubTask(String goalId, String subTaskId) async {
-    final goal = _box.get(goalId);
-    if (goal != null) {
-      goal.subTasks.removeWhere((st) => st.id == subTaskId);
-      await goal.save();
-    }
-  }
-
-  Future<void> toggleSubTaskCompletion(String goalId, String subTaskId) async {
-    final goal = _box.get(goalId);
-    if (goal != null) {
-      final subTask = goal.subTasks.firstWhere((st) => st.id == subTaskId);
-      final index = goal.subTasks.indexOf(subTask);
-      goal.subTasks[index] = subTask.copyWith(isCompleted: !subTask.isCompleted);
-      await goal.save();
-    }
-  }
-
   // Delete
   Future<void> deleteGoal(String id) async {
     await _box.delete(id);
@@ -107,4 +68,3 @@ class GoalRepository {
     return _box.watch().map((_) => getAllGoals());
   }
 }
-

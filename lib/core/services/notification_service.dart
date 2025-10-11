@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest_all.dart' as tz;
@@ -57,27 +58,50 @@ class NotificationService {
   }
 
   Future<bool> requestPermissions() async {
+    // در Web، از بررسی permission صرف‌نظر می‌کنیم زیرا پشتیبانی نمی‌شود
+    if (kIsWeb) {
+      developer.log(
+        'Running on Web - skipping permission checks',
+        name: 'NotificationService',
+      );
+      return true;
+    }
+
     // Request notification permission (Android 13+)
-    if (await Permission.notification.isDenied) {
-      final status = await Permission.notification.request();
-      if (!status.isGranted) {
-        developer.log(
-          'Notification permission denied',
-          name: 'NotificationService',
-        );
-        return false;
+    try {
+      if (await Permission.notification.isDenied) {
+        final status = await Permission.notification.request();
+        if (!status.isGranted) {
+          developer.log(
+            'Notification permission denied',
+            name: 'NotificationService',
+          );
+          return false;
+        }
       }
+    } catch (e) {
+      developer.log(
+        'Error checking notification permission: $e',
+        name: 'NotificationService',
+      );
     }
 
     // Request schedule exact alarm permission (Android 12+)
-    if (await Permission.scheduleExactAlarm.isDenied) {
-      final status = await Permission.scheduleExactAlarm.request();
-      if (!status.isGranted) {
-        developer.log(
-          'Schedule exact alarm permission denied',
-          name: 'NotificationService',
-        );
+    try {
+      if (await Permission.scheduleExactAlarm.isDenied) {
+        final status = await Permission.scheduleExactAlarm.request();
+        if (!status.isGranted) {
+          developer.log(
+            'Schedule exact alarm permission denied',
+            name: 'NotificationService',
+          );
+        }
       }
+    } catch (e) {
+      developer.log(
+        'Error checking schedule exact alarm permission: $e',
+        name: 'NotificationService',
+      );
     }
 
     return true;
@@ -207,7 +231,9 @@ class NotificationService {
 
   // Method to reschedule all pending notifications
   // This should be called on app startup to ensure alarms persist after device reboot
-  Future<void> rescheduleAllNotifications(List<Map<String, dynamic>> notifications) async {
+  Future<void> rescheduleAllNotifications(
+    List<Map<String, dynamic>> notifications,
+  ) async {
     for (final notification in notifications) {
       try {
         await scheduleNotification(

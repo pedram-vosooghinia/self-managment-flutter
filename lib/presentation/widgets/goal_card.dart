@@ -18,8 +18,6 @@ class GoalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
@@ -43,21 +41,22 @@ class GoalCard extends StatelessWidget {
                       children: [
                         Text(
                           goal.title,
-                          style:
-                              Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    decoration: goal.isCompleted
-                                        ? TextDecoration.lineThrough
-                                        : null,
-                                  ),
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            decoration: goal.isCompleted
+                                ? TextDecoration.lineThrough
+                                : null,
+                          ),
                         ),
                         if (goal.description != null) ...[
                           const SizedBox(height: 4),
                           Text(
                             goal.description!,
-                            style:
-                                Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: colorScheme.onSurfaceVariant,
-                                    ),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey,
+                            ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -68,35 +67,11 @@ class GoalCard extends StatelessWidget {
                   IconButton(
                     icon: const Icon(Icons.delete_outline),
                     onPressed: onDelete,
-                    color: colorScheme.error,
+                    color: Colors.red,
                   ),
                 ],
               ),
               const SizedBox(height: 8),
-              // Progress bar for subtasks
-              if (goal.subTasks.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: LinearProgressIndicator(
-                          value: goal.progress,
-                          minHeight: 8,
-                          backgroundColor: colorScheme.surfaceContainerHighest,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '${goal.completedSubTasksCount}/${goal.subTasks.length}',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-              ],
               Wrap(
                 spacing: 8,
                 runSpacing: 4,
@@ -129,17 +104,9 @@ class GoalCard extends StatelessWidget {
                     Chip(
                       avatar: const Icon(Icons.alarm, size: 16),
                       label: Text(
-                        DateFormat('MMM dd, HH:mm')
-                            .format(goal.reminderDateTime!),
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                      visualDensity: VisualDensity.compact,
-                    ),
-                  if (goal.subTasks.isNotEmpty)
-                    Chip(
-                      avatar: const Icon(Icons.checklist, size: 16),
-                      label: Text(
-                        '${goal.subTasks.length} subtasks',
+                        DateFormat(
+                          'MMM dd, HH:mm',
+                        ).format(goal.reminderDateTime!),
                         style: const TextStyle(fontSize: 12),
                       ),
                       visualDensity: VisualDensity.compact,
@@ -153,4 +120,3 @@ class GoalCard extends StatelessWidget {
     );
   }
 }
-

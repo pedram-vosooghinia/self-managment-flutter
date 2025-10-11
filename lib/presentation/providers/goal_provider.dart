@@ -11,8 +11,8 @@ class GoalProvider extends ChangeNotifier {
   GoalProvider({
     required GoalRepository goalRepository,
     required ReminderRepository reminderRepository,
-  })  : _goalRepository = goalRepository,
-        _reminderRepository = reminderRepository;
+  }) : _goalRepository = goalRepository,
+       _reminderRepository = reminderRepository;
 
   List<GoalModel> _goals = [];
   bool _isLoading = false;
@@ -42,7 +42,6 @@ class GoalProvider extends ChangeNotifier {
     DateTime? targetDate,
     DateTime? reminderDateTime,
     String? alarmSoundId,
-    String? notes,
   }) async {
     final goal = GoalModel(
       id: const Uuid().v4(),
@@ -53,7 +52,6 @@ class GoalProvider extends ChangeNotifier {
       targetDate: targetDate,
       reminderDateTime: reminderDateTime,
       alarmSoundId: alarmSoundId,
-      notes: notes,
     );
 
     await _goalRepository.addGoal(goal);
@@ -81,32 +79,7 @@ class GoalProvider extends ChangeNotifier {
     loadGoals();
   }
 
-  Future<void> addSubTask(String goalId, String title) async {
-    final subTask = SubTask(
-      id: const Uuid().v4(),
-      title: title,
-    );
-    await _goalRepository.addSubTask(goalId, subTask);
-    loadGoals();
-  }
-
-  Future<void> updateSubTask(String goalId, SubTask subTask) async {
-    await _goalRepository.updateSubTask(goalId, subTask);
-    loadGoals();
-  }
-
-  Future<void> deleteSubTask(String goalId, String subTaskId) async {
-    await _goalRepository.deleteSubTask(goalId, subTaskId);
-    loadGoals();
-  }
-
-  Future<void> toggleSubTaskCompletion(String goalId, String subTaskId) async {
-    await _goalRepository.toggleSubTaskCompletion(goalId, subTaskId);
-    loadGoals();
-  }
-
   GoalModel? getGoalById(String id) {
     return _goalRepository.getGoalById(id);
   }
 }
-

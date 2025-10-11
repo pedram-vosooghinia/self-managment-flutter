@@ -26,19 +26,46 @@ class TaskRepository {
   List<TaskModel> getTodayTasks() {
     final now = DateTime.now();
     return _box.values.where((task) {
-      if (task.dueDate == null) return false;
-      return task.dueDate!.year == now.year &&
-          task.dueDate!.month == now.month &&
-          task.dueDate!.day == now.day;
+      if (task.isCompleted) return false;
+
+      // اگر یادآوری دارد، چک می‌کنیم که امروز باشد
+      if (task.reminderDateTime != null) {
+        return task.reminderDateTime!.year == now.year &&
+            task.reminderDateTime!.month == now.month &&
+            task.reminderDateTime!.day == now.day;
+      }
+
+      // اگر یادآوری ندارد، همه وظایف انجام نشده را نمایش می‌دهیم
+      return true;
     }).toList();
   }
 
   List<TaskModel> getUpcomingTasks() {
     final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
     return _box.values.where((task) {
-      return task.dueDate != null && task.dueDate!.isAfter(now);
-    }).toList()
-      ..sort((a, b) => a.dueDate!.compareTo(b.dueDate!));
+      if (task.isCompleted) return false;
+
+      // فقط وظایفی که یادآوری در آینده دارند
+      if (task.reminderDateTime != null) {
+        final reminderDate = DateTime(
+          task.reminderDateTime!.year,
+          task.reminderDateTime!.month,
+          task.reminderDateTime!.day,
+        );
+        return reminderDate.isAfter(today);
+      }
+
+      return false;
+    }).toList()..sort((a, b) {
+      if (a.reminderDateTime != null && b.reminderDateTime != null) {
+        return a.reminderDateTime!.compareTo(b.reminderDateTime!);
+      }
+      if (a.reminderDateTime != null) return -1;
+      if (b.reminderDateTime != null) return 1;
+      return 0;
+    });
   }
 
   List<TaskModel> getCompletedTasks() {
@@ -52,9 +79,11 @@ class TaskRepository {
   List<TaskModel> getOverdueTasks() {
     final now = DateTime.now();
     return _box.values.where((task) {
-      return task.dueDate != null &&
-          task.dueDate!.isBefore(now) &&
-          !task.isCompleted;
+      if (task.isCompleted) return false;
+
+      // وظایفی که یادآوری‌شان گذشته است
+      return task.reminderDateTime != null &&
+          task.reminderDateTime!.isBefore(now);
     }).toList();
   }
 
@@ -85,4 +114,3 @@ class TaskRepository {
     return _box.watch().map((_) => getAllTasks());
   }
 }
-

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import 'package:uuid/uuid.dart';
 import '../../../data/models/goal_model.dart';
 import '../../providers/goal_provider.dart';
 import '../../providers/reminder_provider.dart';
@@ -21,14 +20,11 @@ class AddEditGoalScreen extends StatefulWidget {
 class _AddEditGoalScreenState extends State<AddEditGoalScreen> {
   late TextEditingController _titleController;
   late TextEditingController _descriptionController;
-  late TextEditingController _notesController;
-  late TextEditingController _subTaskController;
 
   GoalType _goalType = GoalType.shortTerm;
   DateTime? _targetDate;
   DateTime? _reminderDateTime;
   String? _alarmSoundId;
-  List<SubTask> _subTasks = [];
 
   @override
   void initState() {
@@ -37,15 +33,12 @@ class _AddEditGoalScreenState extends State<AddEditGoalScreen> {
     _descriptionController = TextEditingController(
       text: widget.goal?.description ?? '',
     );
-    _notesController = TextEditingController(text: widget.goal?.notes ?? '');
-    _subTaskController = TextEditingController();
 
     if (widget.goal != null) {
       _goalType = widget.goal!.type;
       _targetDate = widget.goal!.targetDate;
       _reminderDateTime = widget.goal!.reminderDateTime;
       _alarmSoundId = widget.goal!.alarmSoundId;
-      _subTasks = List.from(widget.goal!.subTasks);
     }
   }
 
@@ -53,8 +46,6 @@ class _AddEditGoalScreenState extends State<AddEditGoalScreen> {
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
-    _notesController.dispose();
-    _subTaskController.dispose();
     super.dispose();
   }
 
@@ -64,7 +55,7 @@ class _AddEditGoalScreenState extends State<AddEditGoalScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEditing ? 'Edit Goal' : 'Add Goal'),
+        title: Text(isEditing ? 'ویرایش هدف' : 'اضافه کردن هدف'),
         actions: [
           if (isEditing)
             IconButton(
@@ -81,7 +72,7 @@ class _AddEditGoalScreenState extends State<AddEditGoalScreen> {
           TextField(
             controller: _titleController,
             decoration: const InputDecoration(
-              labelText: 'Title',
+              labelText: 'عنوان',
               border: OutlineInputBorder(),
               prefixIcon: Icon(Icons.flag),
             ),
@@ -91,7 +82,7 @@ class _AddEditGoalScreenState extends State<AddEditGoalScreen> {
           TextField(
             controller: _descriptionController,
             decoration: const InputDecoration(
-              labelText: 'Description (optional)',
+              labelText: 'توضیحات (اختیاری)',
               border: OutlineInputBorder(),
               prefixIcon: Icon(Icons.description),
             ),
@@ -106,20 +97,23 @@ class _AddEditGoalScreenState extends State<AddEditGoalScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Goal Type',
-                    style: Theme.of(context).textTheme.titleMedium,
+                    'نوع هدف',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   SegmentedButton<GoalType>(
                     segments: const [
                       ButtonSegment(
                         value: GoalType.shortTerm,
-                        label: Text('Short Term'),
+                        label: Text('کوتاه مدت'),
                         icon: Icon(Icons.calendar_today),
                       ),
                       ButtonSegment(
                         value: GoalType.longTerm,
-                        label: Text('Long Term'),
+                        label: Text('بلند مدت'),
                         icon: Icon(Icons.calendar_month),
                       ),
                     ],
@@ -140,10 +134,10 @@ class _AddEditGoalScreenState extends State<AddEditGoalScreen> {
               children: [
                 ListTile(
                   leading: const Icon(Icons.calendar_today),
-                  title: const Text('Target Date'),
+                  title: const Text('تاریخ مقصد'),
                   subtitle: _targetDate != null
                       ? Text(DateFormat('MMM dd, yyyy').format(_targetDate!))
-                      : const Text('No date set'),
+                      : const Text('تاریخ مقصد ندارد'),
                   trailing: _targetDate != null
                       ? IconButton(
                           icon: const Icon(Icons.clear),
@@ -159,14 +153,14 @@ class _AddEditGoalScreenState extends State<AddEditGoalScreen> {
                 const Divider(height: 1),
                 ListTile(
                   leading: const Icon(Icons.access_time),
-                  title: const Text('Reminder'),
+                  title: const Text('یادآوری'),
                   subtitle: _reminderDateTime != null
                       ? Text(
                           DateFormat(
                             'MMM dd, yyyy - HH:mm',
                           ).format(_reminderDateTime!),
                         )
-                      : const Text('No reminder set'),
+                      : const Text('یادآوری ندارد'),
                   trailing: _reminderDateTime != null
                       ? IconButton(
                           icon: const Icon(Icons.clear),
@@ -192,7 +186,7 @@ class _AddEditGoalScreenState extends State<AddEditGoalScreen> {
 
                       return ListTile(
                         leading: const Icon(Icons.music_note),
-                        title: const Text('Alarm Sound'),
+                        title: const Text('صدای آلارم'),
                         subtitle: Text(soundName),
                         trailing: const Icon(Icons.chevron_right),
                         onTap: _selectAlarmSound,
@@ -203,118 +197,11 @@ class _AddEditGoalScreenState extends State<AddEditGoalScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 16),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'Subtasks',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                      ),
-                      FilledButton.icon(
-                        onPressed: _showAddSubTaskDialog,
-                        icon: const Icon(Icons.add, size: 18),
-                        label: const Text('Add'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  if (_subTasks.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Center(child: Text('No subtasks yet')),
-                    )
-                  else
-                    ..._subTasks.map((subTask) {
-                      return CheckboxListTile(
-                        value: subTask.isCompleted,
-                        onChanged: (value) {
-                          setState(() {
-                            final index = _subTasks.indexOf(subTask);
-                            _subTasks[index] = subTask.copyWith(
-                              isCompleted: value ?? false,
-                            );
-                          });
-                        },
-                        title: Text(subTask.title),
-                        secondary: IconButton(
-                          icon: const Icon(Icons.delete_outline),
-                          onPressed: () {
-                            setState(() {
-                              _subTasks.remove(subTask);
-                            });
-                          },
-                        ),
-                      );
-                    }),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _notesController,
-            decoration: const InputDecoration(
-              labelText: 'Notes (optional)',
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.notes),
-            ),
-            maxLines: 4,
-            textCapitalization: TextCapitalization.sentences,
-          ),
           const SizedBox(height: 24),
           FilledButton.icon(
             onPressed: _saveGoal,
             icon: const Icon(Icons.save),
             label: Text(isEditing ? 'Update Goal' : 'Create Goal'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showAddSubTaskDialog() {
-    _subTaskController.clear();
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Add Subtask'),
-        content: TextField(
-          controller: _subTaskController,
-          decoration: const InputDecoration(
-            labelText: 'Subtask title',
-            border: OutlineInputBorder(),
-          ),
-          textCapitalization: TextCapitalization.sentences,
-          autofocus: true,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              if (_subTaskController.text.trim().isNotEmpty) {
-                setState(() {
-                  _subTasks.add(
-                    SubTask(
-                      id: const Uuid().v4(),
-                      title: _subTaskController.text.trim(),
-                    ),
-                  );
-                });
-                Navigator.pop(context);
-              }
-            },
-            child: const Text('Add'),
           ),
         ],
       ),
@@ -492,10 +379,6 @@ class _AddEditGoalScreenState extends State<AddEditGoalScreen> {
         targetDate: _targetDate,
         reminderDateTime: _reminderDateTime,
         alarmSoundId: _alarmSoundId,
-        notes: _notesController.text.trim().isEmpty
-            ? null
-            : _notesController.text.trim(),
-        subTasks: _subTasks,
       );
       goalProvider.updateGoal(updatedGoal);
 
@@ -529,9 +412,6 @@ class _AddEditGoalScreenState extends State<AddEditGoalScreen> {
         targetDate: _targetDate,
         reminderDateTime: _reminderDateTime,
         alarmSoundId: _alarmSoundId,
-        notes: _notesController.text.trim().isEmpty
-            ? null
-            : _notesController.text.trim(),
       );
     }
 

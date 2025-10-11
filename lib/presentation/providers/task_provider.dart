@@ -11,8 +11,8 @@ class TaskProvider extends ChangeNotifier {
   TaskProvider({
     required TaskRepository taskRepository,
     required ReminderRepository reminderRepository,
-  })  : _taskRepository = taskRepository,
-        _reminderRepository = reminderRepository;
+  }) : _taskRepository = taskRepository,
+       _reminderRepository = reminderRepository;
 
   List<TaskModel> _tasks = [];
   bool _isLoading = false;
@@ -39,20 +39,16 @@ class TaskProvider extends ChangeNotifier {
   Future<void> addTask({
     required String title,
     String? description,
-    DateTime? dueDate,
     DateTime? reminderDateTime,
     String? alarmSoundId,
-    int priority = 1,
   }) async {
     final task = TaskModel(
       id: const Uuid().v4(),
       title: title,
       description: description,
       createdAt: DateTime.now(),
-      dueDate: dueDate,
       reminderDateTime: reminderDateTime,
       alarmSoundId: alarmSoundId,
-      priority: priority,
     );
 
     await _taskRepository.addTask(task);
@@ -84,4 +80,3 @@ class TaskProvider extends ChangeNotifier {
     return _taskRepository.getTaskById(id);
   }
 }
-

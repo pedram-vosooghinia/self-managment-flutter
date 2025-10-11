@@ -70,7 +70,7 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) {
                             return Container(
-                              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                              color: Colors.grey[200],
                               child: const Center(
                                 child: Icon(Icons.broken_image, size: 64),
                               ),
@@ -110,13 +110,9 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
           else
             Container(
               height: 200,
-              color: Theme.of(context).colorScheme.primaryContainer,
-              child: Center(
-                child: Icon(
-                  Icons.fitness_center,
-                  size: 64,
-                  color: Theme.of(context).colorScheme.onPrimaryContainer,
-                ),
+              color: Colors.blue[100],
+              child: const Center(
+                child: Icon(Icons.fitness_center, size: 64, color: Colors.blue),
               ),
             ),
           // Content
@@ -128,9 +124,10 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
                 // Title
                 Text(
                   widget.workout.title,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 // Stats
@@ -152,7 +149,7 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
                             Container(
                               width: 1,
                               height: 40,
-                              color: Theme.of(context).dividerColor,
+                              color: Colors.grey[300],
                             ),
                             Expanded(
                               child: _buildStatItem(
@@ -170,9 +167,9 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
                             context,
                             Icons.calendar_today,
                             'Last Performed',
-                            DateFormat('MMM dd, yyyy').format(
-                              widget.workout.lastPerformed!,
-                            ),
+                            DateFormat(
+                              'MMM dd, yyyy',
+                            ).format(widget.workout.lastPerformed!),
                           ),
                         ],
                       ],
@@ -184,9 +181,10 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
                 if (widget.workout.description != null) ...[
                   Text(
                     'Description',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Card(
@@ -194,7 +192,7 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
                       padding: const EdgeInsets.all(16),
                       child: Text(
                         widget.workout.description!,
-                        style: Theme.of(context).textTheme.bodyMedium,
+                        style: const TextStyle(fontSize: 14),
                       ),
                     ),
                   ),
@@ -203,9 +201,9 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
                 // Mark as performed button
                 FilledButton.icon(
                   onPressed: () {
-                    context
-                        .read<WorkoutProvider>()
-                        .markAsPerformed(widget.workout.id);
+                    context.read<WorkoutProvider>().markAsPerformed(
+                      widget.workout.id,
+                    );
                     setState(() {});
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
@@ -237,23 +235,13 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
   ) {
     return Column(
       children: [
-        Icon(
-          icon,
-          color: Theme.of(context).colorScheme.primary,
-        ),
+        Icon(icon, color: Colors.blue),
         const SizedBox(height: 8),
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-              ),
-        ),
+        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
         const SizedBox(height: 4),
         Text(
           value,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
       ],
     );
@@ -341,4 +329,3 @@ class _FullScreenImageGalleryState extends State<_FullScreenImageGallery> {
     );
   }
 }
-

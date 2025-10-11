@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 import '../models/reminder_model.dart';
 import '../../core/services/hive_service.dart';
@@ -45,7 +46,9 @@ class ReminderRepository {
   }
 
   List<ReminderModel> getUpcomingReminders() {
-    return _box.values.where((reminder) => reminder.isUpcoming && reminder.isActive).toList();
+    return _box.values
+        .where((reminder) => reminder.isUpcoming && reminder.isActive)
+        .toList();
   }
 
   // Update
@@ -115,7 +118,7 @@ class ReminderRepository {
   // This should be called on app startup to ensure alarms persist after device reboot
   Future<void> rescheduleAllActiveReminders() async {
     final activeReminders = getUpcomingReminders();
-    
+
     for (var reminder in activeReminders) {
       try {
         await _notificationService.scheduleNotification(
@@ -127,9 +130,8 @@ class ReminderRepository {
         );
       } catch (e) {
         // Log error but continue with other reminders
-        print('Error rescheduling reminder ${reminder.id}: $e');
+        debugPrint('Error rescheduling reminder ${reminder.id}: $e');
       }
     }
   }
 }
-

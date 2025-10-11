@@ -19,17 +19,11 @@ class TaskModel extends HiveObject {
   @HiveField(4)
   DateTime createdAt;
 
-  @HiveField(5)
-  DateTime? dueDate;
-
   @HiveField(6)
   DateTime? reminderDateTime;
 
   @HiveField(7)
   String? alarmSoundId; // ID reference to AlarmSoundModel
-
-  @HiveField(8)
-  int priority; // 0: low, 1: medium, 2: high
 
   TaskModel({
     required this.id,
@@ -37,10 +31,8 @@ class TaskModel extends HiveObject {
     this.description,
     this.isCompleted = false,
     required this.createdAt,
-    this.dueDate,
     this.reminderDateTime,
     this.alarmSoundId,
-    this.priority = 1,
   });
 
   TaskModel copyWith({
@@ -49,10 +41,8 @@ class TaskModel extends HiveObject {
     String? description,
     bool? isCompleted,
     DateTime? createdAt,
-    DateTime? dueDate,
     DateTime? reminderDateTime,
     String? alarmSoundId,
-    int? priority,
   }) {
     return TaskModel(
       id: id ?? this.id,
@@ -60,29 +50,33 @@ class TaskModel extends HiveObject {
       description: description ?? this.description,
       isCompleted: isCompleted ?? this.isCompleted,
       createdAt: createdAt ?? this.createdAt,
-      dueDate: dueDate ?? this.dueDate,
       reminderDateTime: reminderDateTime ?? this.reminderDateTime,
       alarmSoundId: alarmSoundId ?? this.alarmSoundId,
-      priority: priority ?? this.priority,
     );
   }
 
-  bool get isToday {
-    if (dueDate == null) return false;
+  bool get hasReminderToday {
+    if (reminderDateTime == null) return false;
     final now = DateTime.now();
-    return dueDate!.year == now.year &&
-        dueDate!.month == now.month &&
-        dueDate!.day == now.day;
+    return reminderDateTime!.year == now.year &&
+        reminderDateTime!.month == now.month &&
+        reminderDateTime!.day == now.day;
   }
 
-  bool get isUpcoming {
-    if (dueDate == null) return false;
-    return dueDate!.isAfter(DateTime.now());
+  bool get hasUpcomingReminder {
+    if (reminderDateTime == null) return false;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final reminderDate = DateTime(
+      reminderDateTime!.year,
+      reminderDateTime!.month,
+      reminderDateTime!.day,
+    );
+    return reminderDate.isAfter(today);
   }
 
-  bool get isOverdue {
-    if (dueDate == null) return false;
-    return dueDate!.isBefore(DateTime.now()) && !isCompleted;
+  bool get hasOverdueReminder {
+    if (reminderDateTime == null) return false;
+    return reminderDateTime!.isBefore(DateTime.now()) && !isCompleted;
   }
 }
-
