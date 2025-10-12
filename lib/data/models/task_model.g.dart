@@ -20,11 +20,11 @@ class TaskModelAdapter extends TypeAdapter<TaskModel> {
       id: fields[0] as String,
       title: fields[1] as String,
       description: fields[2] as String?,
-      isCompleted: fields[3] as bool,
+      isCompleted: fields[3] == null ? false : fields[3] as bool, // Null check
       createdAt: fields[4] as DateTime,
       reminderDateTime: fields[6] as DateTime?,
       alarmSoundId: fields[7] as String?,
-      isRecurring: fields[8] as bool,
+      isRecurring: fields[8] == null ? false : fields[8] as bool, // Null check
       recurringTime: fields[9] as DateTime?,
     );
   }
