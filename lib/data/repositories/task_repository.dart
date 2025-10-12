@@ -28,6 +28,9 @@ class TaskRepository {
     return _box.values.where((task) {
       if (task.isCompleted) return false;
 
+      // تسک‌های تکراری همیشه در لیست امروز نمایش داده می‌شوند
+      if (task.isRecurring) return true;
+
       // اگر یادآوری دارد، چک می‌کنیم که امروز باشد
       if (task.reminderDateTime != null) {
         return task.reminderDateTime!.year == now.year &&
@@ -46,6 +49,9 @@ class TaskRepository {
 
     return _box.values.where((task) {
       if (task.isCompleted) return false;
+
+      // تسک‌های تکراری را در لیست آینده نمایش نمی‌دهیم (فقط در امروز)
+      if (task.isRecurring) return false;
 
       // فقط وظایفی که یادآوری در آینده دارند
       if (task.reminderDateTime != null) {
@@ -80,6 +86,9 @@ class TaskRepository {
     final now = DateTime.now();
     return _box.values.where((task) {
       if (task.isCompleted) return false;
+
+      // تسک‌های تکراری هرگز overdue نمی‌شوند
+      if (task.isRecurring) return false;
 
       // وظایفی که یادآوری‌شان گذشته است
       return task.reminderDateTime != null &&

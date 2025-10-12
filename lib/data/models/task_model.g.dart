@@ -24,13 +24,15 @@ class TaskModelAdapter extends TypeAdapter<TaskModel> {
       createdAt: fields[4] as DateTime,
       reminderDateTime: fields[6] as DateTime?,
       alarmSoundId: fields[7] as String?,
+      isRecurring: fields[8] as bool,
+      recurringTime: fields[9] as DateTime?,
     );
   }
 
   @override
   void write(BinaryWriter writer, TaskModel obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(9)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -44,7 +46,11 @@ class TaskModelAdapter extends TypeAdapter<TaskModel> {
       ..writeByte(6)
       ..write(obj.reminderDateTime)
       ..writeByte(7)
-      ..write(obj.alarmSoundId);
+      ..write(obj.alarmSoundId)
+      ..writeByte(8)
+      ..write(obj.isRecurring)
+      ..writeByte(9)
+      ..write(obj.recurringTime);
   }
 
   @override

@@ -73,6 +73,7 @@ class MyApp extends StatelessWidget {
           create: (_) => TaskProvider(
             taskRepository: taskRepository,
             reminderRepository: reminderRepository,
+            alarmSoundRepository: alarmSoundRepository,
           ),
         ),
         // Provider مدیریت اهداف (Goals)

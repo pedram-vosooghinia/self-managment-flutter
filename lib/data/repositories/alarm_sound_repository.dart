@@ -12,10 +12,12 @@ class AlarmSoundRepository {
 
   // Get alarm sound by ID
   AlarmSoundModel? getAlarmSoundById(String id) {
-    return _box.values.firstWhere(
-      (sound) => sound.id == id,
-      orElse: () => _box.values.first, // Fallback to first sound
-    );
+    try {
+      return _box.values.firstWhere((sound) => sound.id == id);
+    } catch (e) {
+      // Return null if sound not found
+      return null;
+    }
   }
 
   // Add new alarm sound

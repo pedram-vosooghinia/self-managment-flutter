@@ -26,13 +26,14 @@ class ReminderModelAdapter extends TypeAdapter<ReminderModel> {
       notificationId: fields[6] as int,
       title: fields[7] as String,
       body: fields[8] as String?,
+      isRecurring: fields[9] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, ReminderModel obj) {
     writer
-      ..writeByte(9)
+      ..writeByte(10)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -50,7 +51,9 @@ class ReminderModelAdapter extends TypeAdapter<ReminderModel> {
       ..writeByte(7)
       ..write(obj.title)
       ..writeByte(8)
-      ..write(obj.body);
+      ..write(obj.body)
+      ..writeByte(9)
+      ..write(obj.isRecurring);
   }
 
   @override

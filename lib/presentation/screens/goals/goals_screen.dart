@@ -18,7 +18,7 @@ class _GoalsScreenState extends State<GoalsScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
@@ -126,7 +126,9 @@ class _GoalsScreenState extends State<GoalsScreen>
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('حذف هدف'),
-        content: const Text('آیا مطمئن هستید که می‌خواهید این هدف را حذف کنید؟'),
+        content: const Text(
+          'آیا مطمئن هستید که می‌خواهید این هدف را حذف کنید؟',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),

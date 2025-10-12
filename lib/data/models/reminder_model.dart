@@ -39,6 +39,9 @@ class ReminderModel extends HiveObject {
   @HiveField(8)
   String? body;
 
+  @HiveField(9)
+  bool isRecurring; // آیا این یادآور تکراری است؟
+
   ReminderModel({
     required this.id,
     required this.itemId,
@@ -49,6 +52,7 @@ class ReminderModel extends HiveObject {
     required this.notificationId,
     required this.title,
     this.body,
+    this.isRecurring = false,
   });
 
   ReminderModel copyWith({
@@ -61,6 +65,7 @@ class ReminderModel extends HiveObject {
     int? notificationId,
     String? title,
     String? body,
+    bool? isRecurring,
   }) {
     return ReminderModel(
       id: id ?? this.id,
@@ -72,6 +77,7 @@ class ReminderModel extends HiveObject {
       notificationId: notificationId ?? this.notificationId,
       title: title ?? this.title,
       body: body ?? this.body,
+      isRecurring: isRecurring ?? this.isRecurring,
     );
   }
 
@@ -83,4 +89,3 @@ class ReminderModel extends HiveObject {
     return scheduledDateTime.isAfter(DateTime.now());
   }
 }
-

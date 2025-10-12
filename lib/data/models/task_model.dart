@@ -25,6 +25,12 @@ class TaskModel extends HiveObject {
   @HiveField(7)
   String? alarmSoundId; // ID reference to AlarmSoundModel
 
+  @HiveField(8)
+  bool isRecurring; // آیا این تسک روزانه تکرار می‌شود؟
+
+  @HiveField(9)
+  DateTime? recurringTime; // ساعت تکرار روزانه (فقط ساعت و دقیقه مهم است)
+
   TaskModel({
     required this.id,
     required this.title,
@@ -33,6 +39,8 @@ class TaskModel extends HiveObject {
     required this.createdAt,
     this.reminderDateTime,
     this.alarmSoundId,
+    this.isRecurring = false,
+    this.recurringTime,
   });
 
   TaskModel copyWith({
@@ -43,6 +51,8 @@ class TaskModel extends HiveObject {
     DateTime? createdAt,
     DateTime? reminderDateTime,
     String? alarmSoundId,
+    bool? isRecurring,
+    DateTime? recurringTime,
   }) {
     return TaskModel(
       id: id ?? this.id,
@@ -52,6 +62,8 @@ class TaskModel extends HiveObject {
       createdAt: createdAt ?? this.createdAt,
       reminderDateTime: reminderDateTime ?? this.reminderDateTime,
       alarmSoundId: alarmSoundId ?? this.alarmSoundId,
+      isRecurring: isRecurring ?? this.isRecurring,
+      recurringTime: recurringTime ?? this.recurringTime,
     );
   }
 

@@ -22,6 +22,8 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
   late TextEditingController _descriptionController;
   DateTime? _reminderDateTime;
   String? _alarmSoundId;
+  bool _isRecurring = false;
+  TimeOfDay? _recurringTime;
 
   @override
   void initState() {
@@ -32,6 +34,10 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
     );
     _reminderDateTime = widget.task?.reminderDateTime;
     _alarmSoundId = widget.task?.alarmSoundId;
+    _isRecurring = widget.task?.isRecurring ?? false;
+    if (widget.task?.recurringTime != null) {
+      _recurringTime = TimeOfDay.fromDateTime(widget.task!.recurringTime!);
+    }
   }
 
   @override
@@ -85,30 +91,33 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
           Card(
             child: Column(
               children: [
-                ListTile(
-                  leading: const Icon(Icons.access_time),
-                  title: const Text('یادآوری'),
-                  subtitle: _reminderDateTime != null
-                      ? Text(
-                          DateFormat(
-                            'MMM dd, yyyy - HH:mm',
-                          ).format(_reminderDateTime!),
-                        )
-                      : const Text('یادآوری ندارد'),
-                  trailing: _reminderDateTime != null
-                      ? IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () {
-                            setState(() {
-                              _reminderDateTime = null;
-                              _alarmSoundId = null;
-                            });
-                          },
-                        )
-                      : null,
-                  onTap: _pickReminderDateTime,
+                SwitchListTile(
+                  secondary: const Icon(Icons.repeat),
+                  title: const Text('تکرار روزانه'),
+                  subtitle: const Text(
+                    'این وظیفه هر روز در ساعت مشخص تکرار شود',
+                  ),
+                  value: _isRecurring,
+                  onChanged: (value) {
+                    setState(() {
+                      _isRecurring = value;
+                      if (!value) {
+                        _recurringTime = null;
+                      }
+                    });
+                  },
                 ),
-                if (_reminderDateTime != null) ...[
+                if (_isRecurring) ...[
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: const Icon(Icons.schedule),
+                    title: const Text('ساعت تکرار'),
+                    subtitle: _recurringTime != null
+                        ? Text(_recurringTime!.format(context))
+                        : const Text('انتخاب ساعت'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: _pickRecurringTime,
+                  ),
                   const Divider(height: 1),
                   Consumer<AlarmSoundProvider>(
                     builder: (context, alarmSoundProvider, child) {
@@ -127,6 +136,53 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                       );
                     },
                   ),
+                ],
+                if (!_isRecurring) ...[
+                  ListTile(
+                    leading: const Icon(Icons.access_time),
+                    title: const Text('یادآوری'),
+                    subtitle: _reminderDateTime != null
+                        ? Text(
+                            DateFormat(
+                              'MMM dd, yyyy - HH:mm',
+                            ).format(_reminderDateTime!),
+                          )
+                        : const Text('یادآوری ندارد'),
+                    trailing: _reminderDateTime != null
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              setState(() {
+                                _reminderDateTime = null;
+                                _alarmSoundId = null;
+                              });
+                            },
+                          )
+                        : null,
+                    onTap: _pickReminderDateTime,
+                  ),
+                  if (_reminderDateTime != null) ...[
+                    const Divider(height: 1),
+                    Consumer<AlarmSoundProvider>(
+                      builder: (context, alarmSoundProvider, child) {
+                        final selectedSound = _alarmSoundId != null
+                            ? alarmSoundProvider.getAlarmSoundById(
+                                _alarmSoundId!,
+                              )
+                            : null;
+                        final soundName =
+                            selectedSound?.name ?? 'انتخاب صدای آلارم';
+
+                        return ListTile(
+                          leading: const Icon(Icons.music_note),
+                          title: const Text('صدای آلارم'),
+                          subtitle: Text(soundName),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: _selectAlarmSound,
+                        );
+                      },
+                    ),
+                  ],
                 ],
               ],
             ),
@@ -169,6 +225,19 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
           );
         });
       }
+    }
+  }
+
+  Future<void> _pickRecurringTime() async {
+    final time = await showTimePicker(
+      context: context,
+      initialTime: _recurringTime ?? TimeOfDay.now(),
+    );
+
+    if (time != null) {
+      setState(() {
+        _recurringTime = time;
+      });
     }
   }
 
@@ -284,8 +353,36 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
       return;
     }
 
+    // اعتبارسنجی برای تسک تکراری
+    if (_isRecurring && _recurringTime == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('لطفا ساعت تکرار را انتخاب کنید')),
+      );
+      return;
+    }
+
+    if (_isRecurring && _alarmSoundId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('لطفا صدای آلارم را انتخاب کنید')),
+      );
+      return;
+    }
+
     final taskProvider = context.read<TaskProvider>();
     final reminderProvider = context.read<ReminderProvider>();
+
+    // تبدیل _recurringTime به DateTime برای ذخیره سازی
+    DateTime? recurringDateTime;
+    if (_isRecurring && _recurringTime != null) {
+      final now = DateTime.now();
+      recurringDateTime = DateTime(
+        now.year,
+        now.month,
+        now.day,
+        _recurringTime!.hour,
+        _recurringTime!.minute,
+      );
+    }
 
     if (widget.task != null) {
       // Update existing task
@@ -294,13 +391,15 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
         description: _descriptionController.text.trim().isEmpty
             ? null
             : _descriptionController.text.trim(),
-        reminderDateTime: _reminderDateTime,
+        reminderDateTime: _isRecurring ? null : _reminderDateTime,
         alarmSoundId: _alarmSoundId,
+        isRecurring: _isRecurring,
+        recurringTime: recurringDateTime,
       );
       taskProvider.updateTask(updatedTask);
 
       // Update reminder if needed
-      if (_reminderDateTime != null) {
+      if (!_isRecurring && _reminderDateTime != null) {
         // Get the alarm sound file path from the ID
         final alarmSoundPath = _alarmSoundId != null
             ? context
@@ -313,7 +412,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
           itemId: updatedTask.id,
           type: ReminderType.task,
           scheduledDateTime: _reminderDateTime!,
-          title: 'Task Reminder: ${updatedTask.title}',
+          title: 'یادآور وظیفه: ${updatedTask.title}',
           body: updatedTask.description,
           alarmSoundPath: alarmSoundPath,
         );
@@ -325,15 +424,11 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
         description: _descriptionController.text.trim().isEmpty
             ? null
             : _descriptionController.text.trim(),
-        reminderDateTime: _reminderDateTime,
+        reminderDateTime: _isRecurring ? null : _reminderDateTime,
         alarmSoundId: _alarmSoundId,
+        isRecurring: _isRecurring,
+        recurringTime: recurringDateTime,
       );
-
-      // Add reminder if set
-      if (_reminderDateTime != null) {
-        // Note: We need the task ID, so this should be handled differently
-        // For now, we'll add it in the task creation method
-      }
     }
 
     Navigator.pop(context);
