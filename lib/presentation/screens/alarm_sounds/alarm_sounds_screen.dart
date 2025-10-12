@@ -34,7 +34,7 @@ class _AlarmSoundsScreenState extends State<AlarmSoundsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Alarm Sounds')),
+      appBar: AppBar(title: const Text('صداهای آلارم')),
       body: Consumer<AlarmSoundProvider>(
         builder: (context, provider, child) {
           if (provider.alarmSounds.isEmpty) {
@@ -45,19 +45,19 @@ class _AlarmSoundsScreenState extends State<AlarmSoundsScreen> {
                   Icon(Icons.music_off, size: 64, color: Colors.blue),
                   const SizedBox(height: 16),
                   Text(
-                    'No alarm sounds yet',
+                    'هیچ صدای آلارمی ندارید',
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text('Add your first alarm sound to get started'),
+                  const Text('اولین صدای آلارم خود را اضافه کنید'),
                   const SizedBox(height: 24),
                   FilledButton.icon(
                     onPressed: _showAddSoundDialog,
                     icon: const Icon(Icons.add),
-                    label: const Text('Add Alarm Sound'),
+                    label: const Text('اضافه کردن صدای آلارم'),
                   ),
                 ],
               ),
@@ -86,11 +86,11 @@ class _AlarmSoundsScreenState extends State<AlarmSoundsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        sound.isSystemSound ? 'System Sound' : 'Custom Sound',
+                        sound.isSystemSound ? 'صدای سیستم' : 'صدای سفارشی',
                         style: const TextStyle(fontSize: 12),
                       ),
                       Text(
-                        'Added ${DateFormat('MMM dd, yyyy').format(sound.createdAt)}',
+                        'اضافه شده ${DateFormat('MMM dd, yyyy').format(sound.createdAt)}',
                         style: const TextStyle(fontSize: 12),
                       ),
                     ],
@@ -110,7 +110,7 @@ class _AlarmSoundsScreenState extends State<AlarmSoundsScreen> {
                               children: [
                                 Icon(Icons.edit),
                                 SizedBox(width: 8),
-                                Text('Edit'),
+                                Text('ویرایش'),
                               ],
                             ),
                           ),
@@ -120,7 +120,7 @@ class _AlarmSoundsScreenState extends State<AlarmSoundsScreen> {
                               children: [
                                 Icon(Icons.delete),
                                 SizedBox(width: 8),
-                                Text('Delete'),
+                                Text('حذف'),
                               ],
                             ),
                           ),
@@ -144,7 +144,7 @@ class _AlarmSoundsScreenState extends State<AlarmSoundsScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddSoundDialog,
         icon: const Icon(Icons.add),
-        label: const Text('Add Sound'),
+        label: const Text('اضافه کردن صدای آلارم'),
       ),
     );
   }
@@ -166,7 +166,7 @@ class _AlarmSoundsScreenState extends State<AlarmSoundsScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('System sounds will play when alarm triggers'),
+              content: Text('صداهای سیستم زمانی که آلارم فعال شود پخش می‌شوند'),
               duration: Duration(seconds: 2),
             ),
           );
@@ -207,7 +207,7 @@ class _AlarmSoundsScreenState extends State<AlarmSoundsScreen> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: const Text('Add Alarm Sound'),
+          title: const Text('اضافه کردن صدای آلارم'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -215,7 +215,7 @@ class _AlarmSoundsScreenState extends State<AlarmSoundsScreen> {
                 TextField(
                   controller: nameController,
                   decoration: const InputDecoration(
-                    labelText: 'Sound Name',
+                    labelText: 'نام صدای آلارم',
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.label),
                   ),
@@ -234,10 +234,8 @@ class _AlarmSoundsScreenState extends State<AlarmSoundsScreen> {
                       }
                     });
                   },
-                  title: const Text('Use System Default Sound'),
-                  subtitle: const Text(
-                    'Uses the device default notification sound',
-                  ),
+                  title: const Text('استفاده از صدای سیستم'),
+                  subtitle: const Text('استفاده از صدای سیستم دستگاه'),
                 ),
                 if (!isSystemSound) ...[
                   const SizedBox(height: 8),
@@ -257,8 +255,8 @@ class _AlarmSoundsScreenState extends State<AlarmSoundsScreen> {
                     icon: const Icon(Icons.file_upload),
                     label: Text(
                       selectedFilePath != null
-                          ? 'File selected'
-                          : 'Select Audio File',
+                          ? 'فایل انتخاب شده'
+                          : 'انتخاب فایل صوتی',
                     ),
                   ),
                   if (selectedFilePath != null) ...[
@@ -277,13 +275,13 @@ class _AlarmSoundsScreenState extends State<AlarmSoundsScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: const Text('انصراف'),
             ),
             FilledButton(
               onPressed: () {
                 if (nameController.text.trim().isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Please enter a name')),
+                    const SnackBar(content: Text('لطفا نامی وارد کنید')),
                   );
                   return;
                 }
@@ -292,7 +290,7 @@ class _AlarmSoundsScreenState extends State<AlarmSoundsScreen> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text(
-                        'Please select an audio file or use system sound',
+                        'لطفا یک فایل صوتی انتخاب کنید یا از صدای سیستم استفاده کنید',
                       ),
                     ),
                   );
@@ -307,10 +305,10 @@ class _AlarmSoundsScreenState extends State<AlarmSoundsScreen> {
 
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Alarm sound added')),
+                  const SnackBar(content: Text('صدای آلارم اضافه شد')),
                 );
               },
-              child: const Text('Add'),
+              child: const Text('اضافه کردن'),
             ),
           ],
         ),
@@ -324,11 +322,11 @@ class _AlarmSoundsScreenState extends State<AlarmSoundsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Edit Alarm Sound'),
+        title: const Text('ویرایش صدای آلارم'),
         content: TextField(
           controller: nameController,
           decoration: const InputDecoration(
-            labelText: 'Sound Name',
+            labelText: 'نام صدای آلارم',
             border: OutlineInputBorder(),
             prefixIcon: Icon(Icons.label),
           ),
@@ -337,7 +335,7 @@ class _AlarmSoundsScreenState extends State<AlarmSoundsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: const Text('انصراف'),
           ),
           FilledButton(
             onPressed: () {

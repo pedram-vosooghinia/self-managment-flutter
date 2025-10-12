@@ -19,7 +19,7 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Workouts'),
+        title: const Text('برنامه های تمرینی'),
         actions: [
           IconButton(
             icon: const Icon(Icons.search),
@@ -47,12 +47,12 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                   Icon(Icons.fitness_center, size: 64, color: Colors.grey),
                   SizedBox(height: 16),
                   Text(
-                    'No workouts yet',
+                    'هیچ برنامه تمرینی ندارید',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(height: 8),
                   Text(
-                    'Tap the + button to add your first workout',
+                    'برای اضافه کردن برنامه تمرینی کلیک کنید',
                     style: TextStyle(fontSize: 14, color: Colors.grey),
                   ),
                 ],
@@ -246,7 +246,10 @@ class WorkoutSearchDelegate extends SearchDelegate<String> {
 
     if (results.isEmpty) {
       return Center(
-        child: const Text('No workouts found', style: TextStyle(fontSize: 18)),
+        child: const Text(
+          'برنامه تمرینی یافت نشد',
+          style: TextStyle(fontSize: 18),
+        ),
       );
     }
 

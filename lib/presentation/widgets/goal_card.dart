@@ -85,8 +85,8 @@ class GoalCard extends StatelessWidget {
                     ),
                     label: Text(
                       goal.type == GoalType.shortTerm
-                          ? 'Short Term'
-                          : 'Long Term',
+                          ? 'کوتاه مدت'
+                          : 'بلند مدت',
                       style: const TextStyle(fontSize: 12),
                     ),
                     visualDensity: VisualDensity.compact,

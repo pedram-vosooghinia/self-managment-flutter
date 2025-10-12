@@ -201,7 +201,7 @@ class _AddEditGoalScreenState extends State<AddEditGoalScreen> {
           FilledButton.icon(
             onPressed: _saveGoal,
             icon: const Icon(Icons.save),
-            label: Text(isEditing ? 'Update Goal' : 'Create Goal'),
+            label: Text(isEditing ? 'آپدیت' : 'اضافه کردن هدف'),
           ),
         ],
       ),
@@ -262,18 +262,18 @@ class _AddEditGoalScreenState extends State<AddEditGoalScreen> {
       final result = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('No Alarm Sounds'),
+          title: const Text('صدای آلارم ندارد'),
           content: const Text(
-            'You haven\'t added any alarm sounds yet. Would you like to add one now?',
+            'شما هیچ صدای آلارمی ندارید. آیا می‌خواهید یکی اضافه کنید؟',
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel'),
+              child: const Text('انصراف'),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Add Sounds'),
+              child: const Text('اضافه کردن صدای آلارم'),
             ),
           ],
         ),
@@ -298,7 +298,7 @@ class _AddEditGoalScreenState extends State<AddEditGoalScreen> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: const Text('Select Alarm Sound'),
+          title: const Text('انتخاب صدای آلارم'),
           content: SizedBox(
             width: double.maxFinite,
             child: ListView.builder(
@@ -316,7 +316,7 @@ class _AddEditGoalScreenState extends State<AddEditGoalScreen> {
                   ),
                   title: Text(sound.name),
                   subtitle: Text(
-                    sound.isSystemSound ? 'System Sound' : 'Custom Sound',
+                    sound.isSystemSound ? 'صدای سیستم' : 'صدای سفارشی',
                   ),
                   trailing: isSelected ? const Icon(Icons.check) : null,
                   onTap: () {
@@ -329,7 +329,7 @@ class _AddEditGoalScreenState extends State<AddEditGoalScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: const Text('انصراف'),
             ),
             TextButton(
               onPressed: () async {
@@ -343,7 +343,7 @@ class _AddEditGoalScreenState extends State<AddEditGoalScreen> {
                   ),
                 );
               },
-              child: const Text('Manage Sounds'),
+              child: const Text('مدیریت صداهای آلارم'),
             ),
           ],
         ),
@@ -361,7 +361,7 @@ class _AddEditGoalScreenState extends State<AddEditGoalScreen> {
     if (_titleController.text.trim().isEmpty) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Please enter a title')));
+      ).showSnackBar(const SnackBar(content: Text('لطفا عنوانی وارد کنید')));
       return;
     }
 
@@ -396,7 +396,7 @@ class _AddEditGoalScreenState extends State<AddEditGoalScreen> {
           itemId: updatedGoal.id,
           type: ReminderType.goal,
           scheduledDateTime: _reminderDateTime!,
-          title: 'Goal Reminder: ${updatedGoal.title}',
+          title: 'یادآوری هدف: ${updatedGoal.title}',
           body: updatedGoal.description,
           alarmSoundPath: alarmSoundPath,
         );
@@ -422,12 +422,14 @@ class _AddEditGoalScreenState extends State<AddEditGoalScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Goal'),
-        content: const Text('Are you sure you want to delete this goal?'),
+        title: const Text('حذف هدف'),
+        content: const Text(
+          'آیا مطمئن هستید که می‌خواهید این هدف را حذف کنید؟',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: const Text('انصراف'),
           ),
           FilledButton(
             onPressed: () {
@@ -435,7 +437,7 @@ class _AddEditGoalScreenState extends State<AddEditGoalScreen> {
               Navigator.pop(context); // Close dialog
               Navigator.pop(context); // Close screen
             },
-            child: const Text('Delete'),
+            child: const Text('حذف'),
           ),
         ],
       ),

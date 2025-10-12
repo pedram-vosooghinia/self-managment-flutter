@@ -1,9 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
 import '../../../data/models/workout_model.dart';
-import '../../providers/workout_provider.dart';
 import 'add_edit_workout_screen.dart';
 
 class WorkoutDetailScreen extends StatefulWidget {
@@ -115,135 +112,8 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
                 child: Icon(Icons.fitness_center, size: 64, color: Colors.blue),
               ),
             ),
-          // Content
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Title
-                Text(
-                  widget.workout.title,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                // Stats
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildStatItem(
-                                context,
-                                Icons.timer,
-                                'Duration/Reps',
-                                widget.workout.displayDurationOrReps,
-                              ),
-                            ),
-                            Container(
-                              width: 1,
-                              height: 40,
-                              color: Colors.grey[300],
-                            ),
-                            Expanded(
-                              child: _buildStatItem(
-                                context,
-                                Icons.check_circle,
-                                'Completed',
-                                '${widget.workout.timesCompleted}x',
-                              ),
-                            ),
-                          ],
-                        ),
-                        if (widget.workout.lastPerformed != null) ...[
-                          const Divider(height: 24),
-                          _buildStatItem(
-                            context,
-                            Icons.calendar_today,
-                            'Last Performed',
-                            DateFormat(
-                              'MMM dd, yyyy',
-                            ).format(widget.workout.lastPerformed!),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                // Description
-                if (widget.workout.description != null) ...[
-                  Text(
-                    'Description',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Text(
-                        widget.workout.description!,
-                        style: const TextStyle(fontSize: 14),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                ],
-                // Mark as performed button
-                FilledButton.icon(
-                  onPressed: () {
-                    context.read<WorkoutProvider>().markAsPerformed(
-                      widget.workout.id,
-                    );
-                    setState(() {});
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Workout marked as completed!'),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.check),
-                  label: const Text('Mark as Completed'),
-                  style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    minimumSize: const Size(double.infinity, 0),
-                  ),
-                ),
-              ],
-            ),
-          ),
         ],
       ),
-    );
-  }
-
-  Widget _buildStatItem(
-    BuildContext context,
-    IconData icon,
-    String label,
-    String value,
-  ) {
-    return Column(
-      children: [
-        Icon(icon, color: Colors.blue),
-        const SizedBox(height: 8),
-        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-      ],
     );
   }
 
