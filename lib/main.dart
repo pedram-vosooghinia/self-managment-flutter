@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 // سرویس‌های اصلی برنامه
 import 'core/services/hive_service.dart';
 import 'core/services/simple_alarm_service.dart';
+import 'core/services/notification_service.dart';
 
 // مخزن‌های داده (Repositories)
 import 'data/repositories/task_repository.dart';
@@ -34,6 +35,14 @@ void main() async {
 
   // راه‌اندازی پایگاه داده محلی Hive
   await HiveService.initialize();
+
+  // راه‌اندازی سرویس نوتیفیکیشن برای background alarms
+  try {
+    await NotificationService().initialize();
+    debugPrint('سرویس نوتیفیکیشن با موفقیت راه‌اندازی شد');
+  } catch (e) {
+    debugPrint('خطا در راه‌اندازی سرویس نوتیفیکیشن: $e');
+  }
 
   // بازنشانی همه آلارم‌های فعال (مهم برای بعد از ری‌استارت گوشی)
   // این کد تضمین می‌کند که آلارم‌ها بعد از خاموش و روشن شدن گوشی حفظ شوند
@@ -65,11 +74,33 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
 
-    // تنظیم callback برای نمایش صفحه آلارم
+    // تنظیم callback برای SimpleAlarmService (foreground)
     SimpleAlarmService.onAlarmTriggered =
         (id, title, body, reminderId, soundPath) {
           _showAlarmScreen(id, title, body, reminderId, soundPath);
         };
+
+    // تنظیم callback برای NotificationService (background)
+    NotificationService.onNotificationReceived = (payload) {
+      _handleNotification(payload);
+    };
+  }
+
+  void _handleNotification(Map<String, dynamic> payload) {
+    final context = _navigatorKey.currentContext;
+    if (context != null) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => AlarmNotificationScreen(
+            reminderId: payload['reminderId'] ?? '',
+            title: payload['title'] ?? 'یادآور',
+            body: payload['body'],
+            alarmSoundPath: payload['soundPath'],
+          ),
+          fullscreenDialog: true,
+        ),
+      );
+    }
   }
 
   void _showAlarmScreen(

@@ -115,7 +115,6 @@ class SettingsScreen extends StatelessWidget {
               // اطلاعات سازنده
               ListTile(
                 leading: const Icon(Icons.code),
-                title: const Text('ساخته شده با Flutter'),
                 subtitle: const Text('Material Design 3'),
                 onTap: () {
                   showAboutDialog(
@@ -126,6 +125,9 @@ class SettingsScreen extends StatelessWidget {
                     children: [
                       const Text(
                         'برنامه‌ای زیبا و ساده برای مدیریت وظایف و اهداف شخصی',
+                      ),
+                      const Text(
+                        'p.vosooghinia69@gmail.com',
                       ),
                     ],
                   );
