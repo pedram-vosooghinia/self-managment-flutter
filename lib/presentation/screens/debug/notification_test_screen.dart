@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../core/services/notification_service.dart';
 import '../../../core/services/simple_alarm_service.dart';
 
 class NotificationTestScreen extends StatefulWidget {
@@ -10,44 +9,24 @@ class NotificationTestScreen extends StatefulWidget {
 }
 
 class _NotificationTestScreenState extends State<NotificationTestScreen> {
-  final NotificationService _notificationService = NotificationService();
   final SimpleAlarmService _simpleAlarmService = SimpleAlarmService();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('تست نوتیفیکیشن')),
+      appBar: AppBar(title: const Text('تست آلارم')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Text(
-              'تست ساده نوتیفیکیشن',
+              'تست سیستم آلارم صفحه‌باز',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
 
-            // تست Instant Notification
-            ElevatedButton(
-              onPressed: () async {
-                try {
-                  await _notificationService.showInstantNotification(
-                    id: 1,
-                    title: 'تست فوری',
-                    body: 'این یک نوتیفیکیشن فوری است',
-                  );
-                  _showMessage('نوتیفیکیشن فوری ارسال شد');
-                } catch (e) {
-                  _showError('خطا در ارسال نوتیفیکیشن فوری: $e');
-                }
-              },
-              child: const Text('تست نوتیفیکیشن فوری'),
-            ),
-
-            const SizedBox(height: 16),
-
-            // تست Scheduled Notification با SimpleAlarmService
+            // تست آلارم فوری
             ElevatedButton(
               onPressed: () async {
                 try {
@@ -56,34 +35,41 @@ class _NotificationTestScreenState extends State<NotificationTestScreen> {
                   );
                   await _simpleAlarmService.scheduleSimpleAlarm(
                     id: 2,
-                    title: 'تست زمان‌بندی شده (Simple)',
-                    body: 'این نوتیفیکیشن بعد از ۵ ثانیه نمایش داده می‌شود',
+                    title: 'یادآور تست',
+                    body: 'این آلارم بعد از ۵ ثانیه صفحه تمام‌صفحه باز می‌کند',
                     scheduledDateTime: testTime,
+                    reminderId: 'test_reminder_1',
+                    soundPath: 'default', // استفاده از صدای پیش‌فرض برای تست
                   );
-                  _showMessage('آلارم ساده برای ۵ ثانیه بعد زمان‌بندی شد');
+                  _showMessage(
+                    'آلارم برای ۵ ثانیه بعد زمان‌بندی شد - صفحه آلارم باز خواهد شد',
+                  );
                 } catch (e) {
-                  _showError('خطا در زمان‌بندی آلارم ساده: $e');
+                  _showError('خطا در زمان‌بندی آلارم: $e');
                 }
               },
-              child: const Text('تست آلارم ساده ۵ ثانیه بعد'),
+              child: const Text('تست آلارم صفحه‌باز ۵ ثانیه بعد'),
             ),
 
             const SizedBox(height: 16),
 
-            // تست Permissions
+            // تست فوری
             ElevatedButton(
               onPressed: () async {
                 try {
-                  final hasPermission = await _notificationService
-                      .requestPermissions();
-                  _showMessage(
-                    'مجوزها: ${hasPermission ? "اعطا شده" : "رد شده"}',
+                  await _simpleAlarmService.scheduleSimpleAlarm(
+                    id: 3,
+                    title: 'آلارم فوری',
+                    body: 'این آلارم باید فوراً صفحه را باز کند',
+                    scheduledDateTime: DateTime.now(),
+                    reminderId: 'test_reminder_immediate',
+                    soundPath: 'default', // استفاده از صدای پیش‌فرض برای تست
                   );
                 } catch (e) {
-                  _showError('خطا در بررسی مجوزها: $e');
+                  _showError('خطا در آلارم فوری: $e');
                 }
               },
-              child: const Text('بررسی مجوزها'),
+              child: const Text('تست آلارم فوری'),
             ),
 
             const SizedBox(height: 32),
@@ -93,11 +79,19 @@ class _NotificationTestScreenState extends State<NotificationTestScreen> {
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            const Text('• اگر نوتیفیکیشن فوری کار کرد، مشکل از زمان‌بندی است'),
             const Text(
-              '• اگر نوتیفیکیشن فوری هم کار نکرد، مشکل از مجوزها یا تنظیمات است',
+              '• دکمه "تست آلارم فوری" باید فوراً صفحه آلارم را باز کند',
             ),
-            const Text('• برای تست زمان‌بندی، ۵ ثانیه صبر کنید'),
+            const Text(
+              '• دکمه "تست آلارم ۵ ثانیه بعد" بعد از ۵ ثانیه صفحه باز می‌شود',
+            ),
+            const Text('• صفحه آلارم دارای دکمه "بستن آلارم" است'),
+            const Text('• این سیستم بدون نیاز به نوتیفیکیشن کار می‌کند'),
+            const SizedBox(height: 16),
+            Text(
+              'آلارم‌های فعال: ${_simpleAlarmService.activeAlarmsCount}',
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            ),
           ],
         ),
       ),

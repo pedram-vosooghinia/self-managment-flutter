@@ -24,6 +24,7 @@ class ReminderRepository {
         body: reminder.body ?? '',
         scheduledDateTime: reminder.scheduledDateTime,
         reminderId: reminder.id,
+        soundPath: reminder.alarmSoundPath,
       );
     }
   }
@@ -64,6 +65,7 @@ class ReminderRepository {
         body: reminder.body ?? '',
         scheduledDateTime: reminder.scheduledDateTime,
         reminderId: reminder.id,
+        soundPath: reminder.alarmSoundPath,
       );
     }
   }
@@ -81,6 +83,7 @@ class ReminderRepository {
           body: reminder.body ?? '',
           scheduledDateTime: reminder.scheduledDateTime,
           reminderId: reminder.id,
+          soundPath: reminder.alarmSoundPath,
         );
       } else {
         _simpleAlarmService.cancelAlarm(reminder.notificationId);
@@ -127,6 +130,7 @@ class ReminderRepository {
           body: reminder.body ?? '',
           scheduledDateTime: reminder.scheduledDateTime,
           reminderId: reminder.id,
+          soundPath: reminder.alarmSoundPath,
         );
       } catch (e) {
         // Log error but continue with other reminders

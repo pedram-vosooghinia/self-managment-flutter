@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../../../core/services/alarm_debug_helper.dart';
 import '../../../data/repositories/reminder_repository.dart';
 import '../../../data/models/reminder_model.dart';
@@ -15,9 +14,8 @@ class _AlarmDebugScreenState extends State<AlarmDebugScreen> {
   final AlarmDebugHelper _debugHelper = AlarmDebugHelper();
   final ReminderRepository _reminderRepo = ReminderRepository();
 
-  List<PendingNotificationRequest> _pendingNotifications = [];
+  int _activeAlarmsCount = 0;
   List<ReminderModel> _activeReminders = [];
-  Map<String, bool> _permissions = {};
   bool _isLoading = false;
 
   @override
@@ -32,14 +30,12 @@ class _AlarmDebugScreenState extends State<AlarmDebugScreen> {
     });
 
     try {
-      final pending = await _debugHelper.getPendingAlarms();
+      final activeCount = _debugHelper.getActiveAlarmsCount();
       final reminders = _reminderRepo.getUpcomingReminders();
-      final permissions = await _debugHelper.checkPermissions();
 
       setState(() {
-        _pendingNotifications = pending;
+        _activeAlarmsCount = activeCount;
         _activeReminders = reminders;
-        _permissions = permissions;
       });
     } catch (e) {
       if (mounted) {
@@ -67,8 +63,8 @@ class _AlarmDebugScreenState extends State<AlarmDebugScreen> {
     await _loadDebugInfo();
   }
 
-  Future<void> _cancelTestAlarm() async {
-    await _debugHelper.cancelTestAlarm();
+  void _cancelTestAlarm() {
+    _debugHelper.cancelTestAlarm();
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -77,7 +73,7 @@ class _AlarmDebugScreenState extends State<AlarmDebugScreen> {
         ),
       );
     }
-    await _loadDebugInfo();
+    _loadDebugInfo();
   }
 
   Future<void> _rescheduleAll() async {
@@ -125,43 +121,6 @@ class _AlarmDebugScreenState extends State<AlarmDebugScreen> {
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
-                  // Permissions Card
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                _permissions['notifications'] == true
-                                    ? Icons.check_circle
-                                    : Icons.error,
-                                color: _permissions['notifications'] == true
-                                    ? Colors.green
-                                    : Colors.red,
-                              ),
-                              const SizedBox(width: 8),
-                              const Text(
-                                'مجوزها',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'نوتیفیکیشن: ${_permissions['notifications'] == true ? "فعال ✓" : "غیرفعال ✗"}',
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
                   // Statistics Card
                   Card(
                     child: Padding(
@@ -177,10 +136,10 @@ class _AlarmDebugScreenState extends State<AlarmDebugScreen> {
                             ),
                           ),
                           const SizedBox(height: 8),
+                          Text('آلارم‌های فعال (Timer): $_activeAlarmsCount'),
                           Text(
-                            'آلارم‌های زمان‌بندی شده: ${_pendingNotifications.length}',
+                            'یادآورهای ذخیره شده: ${_activeReminders.length}',
                           ),
-                          Text('یادآورهای فعال: ${_activeReminders.length}'),
                         ],
                       ),
                     ),
@@ -223,40 +182,6 @@ class _AlarmDebugScreenState extends State<AlarmDebugScreen> {
                               foregroundColor: Colors.white,
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Pending Notifications List
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'آلارم‌های زمان‌بندی شده',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          if (_pendingNotifications.isEmpty)
-                            const Text('هیچ آلارمی زمان‌بندی نشده است')
-                          else
-                            ..._pendingNotifications.map((notification) {
-                              return ListTile(
-                                leading: const Icon(Icons.notifications_active),
-                                title: Text(notification.title ?? 'بدون عنوان'),
-                                subtitle: Text(
-                                  'ID: ${notification.id}\n${notification.body ?? ""}',
-                                ),
-                                dense: true,
-                              );
-                            }),
                         ],
                       ),
                     ),
@@ -322,10 +247,11 @@ class _AlarmDebugScreenState extends State<AlarmDebugScreen> {
                           ),
                           const SizedBox(height: 8),
                           const Text(
-                            '• تعداد "آلارم‌های زمان‌بندی شده" باید با "یادآورهای فعال" برابر باشد\n'
+                            '• تعداد "آلارم‌های فعال" نشان می‌دهد چند timer در حال اجرا است\n'
+                            '• تعداد "یادآورهای ذخیره شده" نشان می‌دهد چند یادآور در دیتابیس است\n'
                             '• اگر تعداد‌ها برابر نیست، روی "بازنشانی همه آلارم‌ها" کلیک کنید\n'
                             '• برای تست، یک آلارم تستی ایجاد کنید و منتظر بمانید\n'
-                            '• اگر آلارم تستی کار نکرد، مجوزهای برنامه را در تنظیمات گوشی بررسی کنید',
+                            '• این سیستم بدون نیاز به نوتیفیکیشن کار می‌کند',
                             style: TextStyle(fontSize: 13),
                           ),
                         ],

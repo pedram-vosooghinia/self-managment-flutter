@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:developer' as developer;
-import 'notification_service.dart';
 
 class SimpleAlarmService {
   static final SimpleAlarmService _instance = SimpleAlarmService._internal();
@@ -8,7 +7,16 @@ class SimpleAlarmService {
   SimpleAlarmService._internal();
 
   final Map<int, Timer> _activeTimers = {};
-  final NotificationService _notificationService = NotificationService();
+
+  // Callback برای نمایش صفحه آلارم
+  static Function(
+    int id,
+    String title,
+    String body,
+    String? reminderId,
+    String? soundPath,
+  )?
+  onAlarmTriggered;
 
   /// زمان‌بندی یک آلارم ساده
   Future<void> scheduleSimpleAlarm({
@@ -17,6 +25,7 @@ class SimpleAlarmService {
     required String body,
     required DateTime scheduledDateTime,
     String? reminderId,
+    String? soundPath,
   }) async {
     try {
       // حذف timer قبلی اگر وجود داشته باشد
@@ -29,7 +38,7 @@ class SimpleAlarmService {
 
       if (duration.isNegative) {
         developer.log('Alarm time is in the past, showing immediately');
-        await _showNotification(id, title, body, reminderId);
+        _triggerAlarm(id, title, body, reminderId, soundPath);
         return;
       }
 
@@ -38,8 +47,8 @@ class SimpleAlarmService {
       );
 
       // ایجاد timer
-      final timer = Timer(duration, () async {
-        await _showNotification(id, title, body, reminderId);
+      final timer = Timer(duration, () {
+        _triggerAlarm(id, title, body, reminderId, soundPath);
         _activeTimers.remove(id);
       });
 
@@ -50,22 +59,25 @@ class SimpleAlarmService {
     }
   }
 
-  /// نمایش نوتیفیکیشن
-  Future<void> _showNotification(
+  /// فعال کردن آلارم و نمایش صفحه
+  void _triggerAlarm(
     int id,
     String title,
     String body,
     String? reminderId,
-  ) async {
+    String? soundPath,
+  ) {
     try {
-      await _notificationService.showInstantNotification(
-        id: id,
-        title: title,
-        body: body,
-      );
-      developer.log('Alarm notification shown (ID: $id)');
+      if (onAlarmTriggered != null) {
+        onAlarmTriggered!(id, title, body, reminderId, soundPath);
+        developer.log(
+          'Alarm triggered - opening screen (ID: $id) with sound: $soundPath',
+        );
+      } else {
+        developer.log('Warning: onAlarmTriggered callback not set!');
+      }
     } catch (e) {
-      developer.log('Error showing alarm notification: $e');
+      developer.log('Error triggering alarm: $e');
     }
   }
 

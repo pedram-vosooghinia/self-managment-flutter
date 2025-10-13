@@ -1,6 +1,5 @@
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'notification_service.dart';
 import '../../data/repositories/reminder_repository.dart';
+import 'simple_alarm_service.dart';
 import 'dart:developer' as developer;
 
 /// Helper class for debugging alarm issues
@@ -9,30 +8,17 @@ class AlarmDebugHelper {
   factory AlarmDebugHelper() => _instance;
   AlarmDebugHelper._internal();
 
-  final NotificationService _notificationService = NotificationService();
-
-  /// Get all pending notifications
-  Future<List<PendingNotificationRequest>> getPendingAlarms() async {
-    return await _notificationService.getPendingNotifications();
-  }
+  final SimpleAlarmService _simpleAlarmService = SimpleAlarmService();
 
   /// Print debug information about all alarms
   Future<void> printAlarmDebugInfo() async {
     developer.log('=== Alarm Debug Info ===', name: 'AlarmDebug');
 
-    // Get pending notifications
-    final pendingNotifications = await getPendingAlarms();
+    // Get active timers from SimpleAlarmService
     developer.log(
-      'Total pending notifications: ${pendingNotifications.length}',
+      'Total active timers: ${_simpleAlarmService.activeAlarmsCount}',
       name: 'AlarmDebug',
     );
-
-    for (var notification in pendingNotifications) {
-      developer.log(
-        'ID: ${notification.id}, Title: ${notification.title}, Body: ${notification.body}',
-        name: 'AlarmDebug',
-      );
-    }
 
     // Get active reminders
     final reminderRepo = ReminderRepository();
@@ -62,42 +48,35 @@ class AlarmDebugHelper {
     developer.log('=== End Debug Info ===', name: 'AlarmDebug');
   }
 
-  /// Check if a specific notification is scheduled
-  Future<bool> isNotificationScheduled(int notificationId) async {
-    final pendingNotifications = await getPendingAlarms();
-    return pendingNotifications.any((n) => n.id == notificationId);
+  /// Check if a specific alarm is scheduled
+  bool isAlarmScheduled(int alarmId) {
+    return _simpleAlarmService.isAlarmActive(alarmId);
   }
 
   /// Test alarm by scheduling one for 1 minute from now
   Future<void> scheduleTestAlarm() async {
     final testTime = DateTime.now().add(const Duration(minutes: 1));
-    
-    await _notificationService.scheduleNotification(
+
+    await _simpleAlarmService.scheduleSimpleAlarm(
       id: 99999,
       title: 'آلارم تست',
       body: 'این یک آلارم تستی است که باید در یک دقیقه دیگر فعال شود',
       scheduledDateTime: testTime,
+      reminderId: 'test_alarm_99999',
+      soundPath: 'default', // استفاده از صدای پیش‌فرض برای تست
     );
 
-    developer.log(
-      'Test alarm scheduled for: $testTime',
-      name: 'AlarmDebug',
-    );
+    developer.log('Test alarm scheduled for: $testTime', name: 'AlarmDebug');
   }
 
   /// Cancel test alarm
-  Future<void> cancelTestAlarm() async {
-    await _notificationService.cancelNotification(99999);
+  void cancelTestAlarm() {
+    _simpleAlarmService.cancelAlarm(99999);
     developer.log('Test alarm cancelled', name: 'AlarmDebug');
   }
 
-  /// Request all necessary permissions
-  Future<Map<String, bool>> checkPermissions() async {
-    final hasPermission = await _notificationService.requestPermissions();
-    
-    return {
-      'notifications': hasPermission,
-    };
+  /// Get active alarms count
+  int getActiveAlarmsCount() {
+    return _simpleAlarmService.activeAlarmsCount;
   }
 }
-

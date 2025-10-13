@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../core/services/notification_service.dart';
+import '../../../core/services/simple_alarm_service.dart';
+import '../../../core/services/alarm_service.dart';
 
 class AlarmNotificationScreen extends StatefulWidget {
   final String reminderId;
@@ -22,34 +23,46 @@ class AlarmNotificationScreen extends StatefulWidget {
 
 class _AlarmNotificationScreenState extends State<AlarmNotificationScreen>
     with WidgetsBindingObserver {
+  final AlarmService _alarmService = AlarmService();
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+
+    // پخش صدای آلارم
+    _alarmService.playAlarm(widget.alarmSoundPath);
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    // متوقف کردن صدای آلارم
+    _alarmService.stopAlarm();
     super.dispose();
   }
 
   void _dismissAlarm() {
+    // متوقف کردن صدا قبل از بستن
+    _alarmService.stopAlarm();
     Navigator.of(context).pop();
   }
 
   void _snoozeAlarm() async {
-    // زمان‌بندی مجدد برای 5 دقیقه بعد
+    // متوقف کردن صدا
+    await _alarmService.stopAlarm();
+
+    // زمان‌بندی مجدد برای 5 دقیقه بعد با SimpleAlarmService
     final snoozeTime = DateTime.now().add(const Duration(minutes: 5));
 
-    final notificationService = NotificationService();
-    await notificationService.scheduleNotification(
+    final simpleAlarmService = SimpleAlarmService();
+    await simpleAlarmService.scheduleSimpleAlarm(
       id: DateTime.now().millisecondsSinceEpoch % 100000,
       title: '⏰ ${widget.title}',
       body: widget.body ?? 'یادآور به تعویق افتاد',
       scheduledDateTime: snoozeTime,
-      soundPath: widget.alarmSoundPath,
       reminderId: widget.reminderId,
+      soundPath: widget.alarmSoundPath,
     );
 
     if (mounted) {
