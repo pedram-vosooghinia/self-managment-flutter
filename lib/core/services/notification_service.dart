@@ -4,6 +4,7 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:developer' as developer;
+import 'dart:convert';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -14,6 +15,9 @@ class NotificationService {
       FlutterLocalNotificationsPlugin();
 
   bool _isInitialized = false;
+
+  // Callback برای handle کردن notification
+  static Function(Map<String, dynamic>)? onNotificationReceived;
 
   Future<void> initialize() async {
     if (_isInitialized) return;
@@ -49,12 +53,22 @@ class NotificationService {
   }
 
   void _onNotificationTapped(NotificationResponse response) {
-    // Handle notification tap
-    // You can navigate to specific screen based on payload
     developer.log(
-      'Notification tapped: ${response.payload}',
+      'Notification received: ${response.payload}',
       name: 'NotificationService',
     );
+
+    if (response.payload != null && onNotificationReceived != null) {
+      try {
+        final payload = jsonDecode(response.payload!);
+        onNotificationReceived!(payload);
+      } catch (e) {
+        developer.log(
+          'Error parsing notification payload: $e',
+          name: 'NotificationService',
+        );
+      }
+    }
   }
 
   Future<bool> requestPermissions() async {
@@ -113,6 +127,7 @@ class NotificationService {
     required String body,
     required DateTime scheduledDateTime,
     String? soundPath,
+    String? reminderId,
   }) async {
     // Ensure permissions are granted
     final hasPermission = await requestPermissions();
@@ -133,20 +148,28 @@ class NotificationService {
       return;
     }
 
-    final androidDetails = AndroidNotificationDetails(
+    // ساخت payload برای notification
+    final payload = jsonEncode({
+      'id': id,
+      'reminderId': reminderId ?? '',
+      'title': title,
+      'body': body,
+      'soundPath': soundPath ?? '',
+    });
+
+    // برای صدا، فعلاً از صدای پیش‌فرض سیستم استفاده می‌کنیم
+    // چون استفاده از custom sound در runtime نیاز به configuration خاص دارد
+    const androidDetails = AndroidNotificationDetails(
       'task_reminder_channel',
       'Task Reminders',
       channelDescription: 'Notifications for task and goal reminders',
       importance: Importance.max,
       priority: Priority.high,
       playSound: true,
-      sound: soundPath != null
-          ? UriAndroidNotificationSound(soundPath)
-          : const RawResourceAndroidNotificationSound('notification'),
       enableVibration: true,
       fullScreenIntent: true,
       category: AndroidNotificationCategory.alarm,
-      styleInformation: const DefaultStyleInformation(true, true),
+      styleInformation: DefaultStyleInformation(true, true),
       ticker: 'Alarm',
       channelShowBadge: true,
       onlyAlertOnce: false,
@@ -176,6 +199,7 @@ class NotificationService {
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
+        payload: payload,
       );
 
       developer.log(

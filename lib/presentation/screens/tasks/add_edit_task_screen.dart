@@ -345,7 +345,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
     }
   }
 
-  void _saveTask() {
+  Future<void> _saveTask() async {
     if (_titleController.text.trim().isEmpty) {
       ScaffoldMessenger.of(
         context,
@@ -398,17 +398,27 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
       );
       taskProvider.updateTask(updatedTask);
 
-      // Update reminder if needed
-      if (!_isRecurring && _reminderDateTime != null) {
+      // حذف یادآورهای قبلی غیر تکراری
+      if (!_isRecurring) {
+        final oldReminders = reminderProvider.getRemindersByItemId(
+          updatedTask.id,
+        );
+        for (var reminder in oldReminders) {
+          if (!reminder.isRecurring) {
+            await reminderProvider.deleteReminder(reminder.id);
+          }
+        }
+      }
+
+      // اضافه کردن یادآور جدید در صورت نیاز
+      if (!_isRecurring && _reminderDateTime != null && mounted) {
         // Get the alarm sound file path from the ID
+        final alarmSoundProvider = context.read<AlarmSoundProvider>();
         final alarmSoundPath = _alarmSoundId != null
-            ? context
-                  .read<AlarmSoundProvider>()
-                  .getAlarmSoundById(_alarmSoundId!)
-                  ?.filePath
+            ? alarmSoundProvider.getAlarmSoundById(_alarmSoundId!)?.filePath
             : null;
 
-        reminderProvider.addReminder(
+        await reminderProvider.addReminder(
           itemId: updatedTask.id,
           type: ReminderType.task,
           scheduledDateTime: _reminderDateTime!,
@@ -419,7 +429,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
       }
     } else {
       // Create new task
-      taskProvider.addTask(
+      await taskProvider.addTask(
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim().isEmpty
             ? null
@@ -429,9 +439,35 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
         isRecurring: _isRecurring,
         recurringTime: recurringDateTime,
       );
+
+      // اضافه کردن یادآور برای تسک جدید
+      if (!_isRecurring && _reminderDateTime != null && mounted) {
+        // Get the alarm sound file path from the ID
+        final alarmSoundProvider = context.read<AlarmSoundProvider>();
+        final alarmSoundPath = _alarmSoundId != null
+            ? alarmSoundProvider.getAlarmSoundById(_alarmSoundId!)?.filePath
+            : null;
+
+        // پیدا کردن task که الان اضافه شده
+        taskProvider.loadTasks();
+        final tasks = taskProvider.tasks;
+        final newTask = tasks.firstWhere(
+          (t) => t.title == _titleController.text.trim(),
+          orElse: () => tasks.last,
+        );
+
+        await reminderProvider.addReminder(
+          itemId: newTask.id,
+          type: ReminderType.task,
+          scheduledDateTime: _reminderDateTime!,
+          title: 'یادآور وظیفه: ${newTask.title}',
+          body: newTask.description,
+          alarmSoundPath: alarmSoundPath,
+        );
+      }
     }
 
-    Navigator.pop(context);
+    if (mounted) Navigator.pop(context);
   }
 
   void _showDeleteDialog(BuildContext context) {

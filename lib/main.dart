@@ -23,6 +23,7 @@ import 'presentation/providers/workout_provider.dart';
 
 // صفحه اصلی برنامه
 import 'presentation/screens/home_screen.dart';
+import 'presentation/screens/alarm/alarm_notification_screen.dart';
 
 // ==================== تابع اصلی برنامه ====================
 /// نقطه شروع اصلی اپلیکیشن
@@ -52,8 +53,42 @@ void main() async {
 
 // ==================== کلاس اصلی برنامه ====================
 /// ویجت اصلی اپلیکیشن که تمام تنظیمات و providerها را راه‌اندازی می‌کند
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+
+  @override
+  void initState() {
+    super.initState();
+
+    // تنظیم callback برای handle کردن notification
+    NotificationService.onNotificationReceived = (payload) {
+      _handleNotification(payload);
+    };
+  }
+
+  void _handleNotification(Map<String, dynamic> payload) {
+    final context = _navigatorKey.currentContext;
+    if (context != null) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => AlarmNotificationScreen(
+            reminderId: payload['reminderId'] ?? '',
+            title: payload['title'] ?? 'یادآور',
+            body: payload['body'],
+            alarmSoundPath: payload['soundPath'],
+          ),
+          fullscreenDialog: true,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -101,6 +136,7 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp(
         // ==================== تنظیمات اصلی برنامه ====================
+        navigatorKey: _navigatorKey,
         title: 'مدیریت شخصی',
         debugShowCheckedModeBanner: false,
 

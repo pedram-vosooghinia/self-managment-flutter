@@ -357,7 +357,7 @@ class _AddEditGoalScreenState extends State<AddEditGoalScreen> {
     }
   }
 
-  void _saveGoal() {
+  Future<void> _saveGoal() async {
     if (_titleController.text.trim().isEmpty) {
       ScaffoldMessenger.of(
         context,
@@ -382,17 +382,25 @@ class _AddEditGoalScreenState extends State<AddEditGoalScreen> {
       );
       goalProvider.updateGoal(updatedGoal);
 
-      // Update reminder if needed
-      if (_reminderDateTime != null) {
+      // حذف یادآورهای قبلی
+      final oldReminders = reminderProvider.getRemindersByItemId(
+        updatedGoal.id,
+      );
+      for (var reminder in oldReminders) {
+        if (!reminder.isRecurring) {
+          await reminderProvider.deleteReminder(reminder.id);
+        }
+      }
+
+      // اضافه کردن یادآور جدید در صورت نیاز
+      if (_reminderDateTime != null && mounted) {
         // Get the alarm sound file path from the ID
+        final alarmSoundProvider = context.read<AlarmSoundProvider>();
         final alarmSoundPath = _alarmSoundId != null
-            ? context
-                  .read<AlarmSoundProvider>()
-                  .getAlarmSoundById(_alarmSoundId!)
-                  ?.filePath
+            ? alarmSoundProvider.getAlarmSoundById(_alarmSoundId!)?.filePath
             : null;
 
-        reminderProvider.addReminder(
+        await reminderProvider.addReminder(
           itemId: updatedGoal.id,
           type: ReminderType.goal,
           scheduledDateTime: _reminderDateTime!,
@@ -403,7 +411,7 @@ class _AddEditGoalScreenState extends State<AddEditGoalScreen> {
       }
     } else {
       // Create new goal
-      goalProvider.addGoal(
+      await goalProvider.addGoal(
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim().isEmpty
             ? null
@@ -413,9 +421,35 @@ class _AddEditGoalScreenState extends State<AddEditGoalScreen> {
         reminderDateTime: _reminderDateTime,
         alarmSoundId: _alarmSoundId,
       );
+
+      // اضافه کردن یادآور برای هدف جدید
+      if (_reminderDateTime != null && mounted) {
+        // Get the alarm sound file path from the ID
+        final alarmSoundProvider = context.read<AlarmSoundProvider>();
+        final alarmSoundPath = _alarmSoundId != null
+            ? alarmSoundProvider.getAlarmSoundById(_alarmSoundId!)?.filePath
+            : null;
+
+        // پیدا کردن goal که الان اضافه شده
+        goalProvider.loadGoals();
+        final goals = goalProvider.goals;
+        final newGoal = goals.firstWhere(
+          (g) => g.title == _titleController.text.trim(),
+          orElse: () => goals.last,
+        );
+
+        await reminderProvider.addReminder(
+          itemId: newGoal.id,
+          type: ReminderType.goal,
+          scheduledDateTime: _reminderDateTime!,
+          title: 'یادآوری هدف: ${newGoal.title}',
+          body: newGoal.description,
+          alarmSoundPath: alarmSoundPath,
+        );
+      }
     }
 
-    Navigator.pop(context);
+    if (mounted) Navigator.pop(context);
   }
 
   void _showDeleteDialog(BuildContext context) {
