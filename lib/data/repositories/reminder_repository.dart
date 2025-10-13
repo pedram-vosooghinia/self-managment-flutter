@@ -2,11 +2,11 @@ import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 import '../models/reminder_model.dart';
 import '../../core/services/hive_service.dart';
-import '../../core/services/notification_service.dart';
+import '../../core/services/simple_alarm_service.dart';
 
 class ReminderRepository {
   late Box<ReminderModel> _box;
-  final NotificationService _notificationService = NotificationService();
+  final SimpleAlarmService _simpleAlarmService = SimpleAlarmService();
 
   ReminderRepository() {
     _box = HiveService.remindersBoxInstance;
@@ -16,14 +16,13 @@ class ReminderRepository {
   Future<void> addReminder(ReminderModel reminder) async {
     await _box.put(reminder.id, reminder);
 
-    // Schedule notification
+    // Schedule notification using simple alarm service
     if (reminder.isActive && reminder.isUpcoming) {
-      await _notificationService.scheduleNotification(
+      await _simpleAlarmService.scheduleSimpleAlarm(
         id: reminder.notificationId,
         title: reminder.title,
         body: reminder.body ?? '',
         scheduledDateTime: reminder.scheduledDateTime,
-        soundPath: reminder.alarmSoundPath,
         reminderId: reminder.id,
       );
     }
@@ -56,15 +55,14 @@ class ReminderRepository {
   Future<void> updateReminder(ReminderModel reminder) async {
     await _box.put(reminder.id, reminder);
 
-    // Reschedule notification
-    await _notificationService.cancelNotification(reminder.notificationId);
+    // Reschedule notification using simple alarm service
+    _simpleAlarmService.cancelAlarm(reminder.notificationId);
     if (reminder.isActive && reminder.isUpcoming) {
-      await _notificationService.scheduleNotification(
+      await _simpleAlarmService.scheduleSimpleAlarm(
         id: reminder.notificationId,
         title: reminder.title,
         body: reminder.body ?? '',
         scheduledDateTime: reminder.scheduledDateTime,
-        soundPath: reminder.alarmSoundPath,
         reminderId: reminder.id,
       );
     }
@@ -77,16 +75,15 @@ class ReminderRepository {
       await reminder.save();
 
       if (reminder.isActive && reminder.isUpcoming) {
-        await _notificationService.scheduleNotification(
+        await _simpleAlarmService.scheduleSimpleAlarm(
           id: reminder.notificationId,
           title: reminder.title,
           body: reminder.body ?? '',
           scheduledDateTime: reminder.scheduledDateTime,
-          soundPath: reminder.alarmSoundPath,
           reminderId: reminder.id,
         );
       } else {
-        await _notificationService.cancelNotification(reminder.notificationId);
+        _simpleAlarmService.cancelAlarm(reminder.notificationId);
       }
     }
   }
@@ -95,7 +92,7 @@ class ReminderRepository {
   Future<void> deleteReminder(String id) async {
     final reminder = _box.get(id);
     if (reminder != null) {
-      await _notificationService.cancelNotification(reminder.notificationId);
+      _simpleAlarmService.cancelAlarm(reminder.notificationId);
       await _box.delete(id);
     }
   }
@@ -108,7 +105,7 @@ class ReminderRepository {
   }
 
   Future<void> deleteAllReminders() async {
-    await _notificationService.cancelAllNotifications();
+    _simpleAlarmService.cancelAllAlarms();
     await _box.clear();
   }
 
@@ -124,12 +121,11 @@ class ReminderRepository {
 
     for (var reminder in activeReminders) {
       try {
-        await _notificationService.scheduleNotification(
+        await _simpleAlarmService.scheduleSimpleAlarm(
           id: reminder.notificationId,
           title: reminder.title,
           body: reminder.body ?? '',
           scheduledDateTime: reminder.scheduledDateTime,
-          soundPath: reminder.alarmSoundPath,
           reminderId: reminder.id,
         );
       } catch (e) {

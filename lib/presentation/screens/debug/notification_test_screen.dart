@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/services/notification_service.dart';
+import '../../../core/services/simple_alarm_service.dart';
 
 class NotificationTestScreen extends StatefulWidget {
   const NotificationTestScreen({super.key});
@@ -10,6 +11,7 @@ class NotificationTestScreen extends StatefulWidget {
 
 class _NotificationTestScreenState extends State<NotificationTestScreen> {
   final NotificationService _notificationService = NotificationService();
+  final SimpleAlarmService _simpleAlarmService = SimpleAlarmService();
 
   @override
   Widget build(BuildContext context) {
@@ -45,25 +47,25 @@ class _NotificationTestScreenState extends State<NotificationTestScreen> {
 
             const SizedBox(height: 16),
 
-            // تست Scheduled Notification
+            // تست Scheduled Notification با SimpleAlarmService
             ElevatedButton(
               onPressed: () async {
                 try {
                   final testTime = DateTime.now().add(
                     const Duration(seconds: 5),
                   );
-                  await _notificationService.scheduleNotification(
+                  await _simpleAlarmService.scheduleSimpleAlarm(
                     id: 2,
-                    title: 'تست زمان‌بندی شده',
+                    title: 'تست زمان‌بندی شده (Simple)',
                     body: 'این نوتیفیکیشن بعد از ۵ ثانیه نمایش داده می‌شود',
                     scheduledDateTime: testTime,
                   );
-                  _showMessage('نوتیفیکیشن برای ۵ ثانیه بعد زمان‌بندی شد');
+                  _showMessage('آلارم ساده برای ۵ ثانیه بعد زمان‌بندی شد');
                 } catch (e) {
-                  _showError('خطا در زمان‌بندی نوتیفیکیشن: $e');
+                  _showError('خطا در زمان‌بندی آلارم ساده: $e');
                 }
               },
-              child: const Text('تست نوتیفیکیشن ۵ ثانیه بعد'),
+              child: const Text('تست آلارم ساده ۵ ثانیه بعد'),
             ),
 
             const SizedBox(height: 16),

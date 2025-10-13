@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest_all.dart' as tz;
-import 'package:permission_handler/permission_handler.dart';
 import 'dart:developer' as developer;
 import 'dart:convert';
 
@@ -23,11 +23,10 @@ class NotificationService {
     if (_isInitialized) return;
 
     try {
-      // Initialize timezone with local location
+      // Initialize timezone
       tz.initializeTimeZones();
-      // Set local timezone (you can change this to your timezone, e.g., 'Asia/Tehran')
-      tz.setLocalLocation(tz.getLocation('Asia/Tehran'));
 
+      // تنظیمات ساده‌تر برای Android
       const androidSettings = AndroidInitializationSettings(
         '@mipmap/ic_launcher',
       );
@@ -210,12 +209,19 @@ class NotificationService {
         iOS: iosDetails,
       );
 
+      // تبدیل DateTime به TZDateTime
+      final tz.TZDateTime scheduledDate = tz.TZDateTime.from(
+        scheduledDateTime,
+        tz.local,
+      );
+
+      // استفاده از zonedSchedule
       try {
         await _notifications.zonedSchedule(
           id,
           title,
           body,
-          tz.TZDateTime.from(scheduledDateTime, tz.local),
+          scheduledDate,
           notificationDetails,
           androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
           uiLocalNotificationDateInterpretation:
@@ -229,11 +235,11 @@ class NotificationService {
         );
       } catch (e) {
         developer.log(
-          'ZonedSchedule failed, trying instant notification: $e',
+          'Schedule failed, trying instant notification: $e',
           name: 'NotificationService',
         );
 
-        // اگر zonedSchedule شکست خورد، instant notification نمایش بده
+        // اگر schedule شکست خورد، instant notification نمایش بده
         await showInstantNotification(id: id, title: title, body: body);
       }
     } catch (e) {
