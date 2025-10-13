@@ -22,34 +22,45 @@ class NotificationService {
   Future<void> initialize() async {
     if (_isInitialized) return;
 
-    // Initialize timezone with local location
-    tz.initializeTimeZones();
-    // Set local timezone (you can change this to your timezone, e.g., 'Asia/Tehran')
-    tz.setLocalLocation(tz.getLocation('Asia/Tehran'));
+    try {
+      // Initialize timezone with local location
+      tz.initializeTimeZones();
+      // Set local timezone (you can change this to your timezone, e.g., 'Asia/Tehran')
+      tz.setLocalLocation(tz.getLocation('Asia/Tehran'));
 
-    const androidSettings = AndroidInitializationSettings(
-      '@mipmap/ic_launcher',
-    );
-    const iosSettings = DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
-    );
+      const androidSettings = AndroidInitializationSettings(
+        '@mipmap/ic_launcher',
+      );
+      const iosSettings = DarwinInitializationSettings(
+        requestAlertPermission: true,
+        requestBadgePermission: true,
+        requestSoundPermission: true,
+      );
 
-    const initSettings = InitializationSettings(
-      android: androidSettings,
-      iOS: iosSettings,
-    );
+      const initSettings = InitializationSettings(
+        android: androidSettings,
+        iOS: iosSettings,
+      );
 
-    await _notifications.initialize(
-      initSettings,
-      onDidReceiveNotificationResponse: _onNotificationTapped,
-    );
+      final bool? initialized = await _notifications.initialize(
+        initSettings,
+        onDidReceiveNotificationResponse: _onNotificationTapped,
+      );
 
-    // Request necessary permissions
-    await requestPermissions();
+      if (initialized == true) {
+        developer.log('Notification service initialized successfully');
 
-    _isInitialized = true;
+        // Request necessary permissions
+        await requestPermissions();
+        _isInitialized = true;
+      } else {
+        developer.log('Failed to initialize notification service');
+      }
+    } catch (e) {
+      developer.log('Error initializing notification service: $e');
+      // اگر initialization شکست خورد، سعی کنیم بدون notification service ادامه دهیم
+      _isInitialized = false;
+    }
   }
 
   void _onNotificationTapped(NotificationResponse response) {
@@ -129,88 +140,108 @@ class NotificationService {
     String? soundPath,
     String? reminderId,
   }) async {
-    // Ensure permissions are granted
-    final hasPermission = await requestPermissions();
-    if (!hasPermission) {
+    // بررسی اینکه service initialized شده باشد
+    if (!_isInitialized) {
       developer.log(
-        'Cannot schedule notification: permissions not granted',
+        'Cannot schedule notification: service not initialized',
         name: 'NotificationService',
       );
       return;
     }
-
-    // Check if the scheduled time is in the future
-    if (scheduledDateTime.isBefore(DateTime.now())) {
-      developer.log(
-        'Cannot schedule notification: time is in the past',
-        name: 'NotificationService',
-      );
-      return;
-    }
-
-    // ساخت payload برای notification
-    final payload = jsonEncode({
-      'id': id,
-      'reminderId': reminderId ?? '',
-      'title': title,
-      'body': body,
-      'soundPath': soundPath ?? '',
-    });
-
-    // برای صدا، فعلاً از صدای پیش‌فرض سیستم استفاده می‌کنیم
-    // چون استفاده از custom sound در runtime نیاز به configuration خاص دارد
-    const androidDetails = AndroidNotificationDetails(
-      'task_reminder_channel',
-      'Task Reminders',
-      channelDescription: 'Notifications for task and goal reminders',
-      importance: Importance.max,
-      priority: Priority.high,
-      playSound: true,
-      enableVibration: true,
-      fullScreenIntent: true,
-      category: AndroidNotificationCategory.alarm,
-      styleInformation: DefaultStyleInformation(true, true),
-      ticker: 'Alarm',
-      channelShowBadge: true,
-      onlyAlertOnce: false,
-      autoCancel: false,
-    );
-
-    const iosDetails = DarwinNotificationDetails(
-      presentAlert: true,
-      presentBadge: true,
-      presentSound: true,
-      sound: 'notification.aiff',
-      interruptionLevel: InterruptionLevel.timeSensitive,
-    );
-
-    final notificationDetails = NotificationDetails(
-      android: androidDetails,
-      iOS: iosDetails,
-    );
 
     try {
-      await _notifications.zonedSchedule(
-        id,
-        title,
-        body,
-        tz.TZDateTime.from(scheduledDateTime, tz.local),
-        notificationDetails,
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
-        payload: payload,
+      // Ensure permissions are granted
+      final hasPermission = await requestPermissions();
+      if (!hasPermission) {
+        developer.log(
+          'Cannot schedule notification: permissions not granted',
+          name: 'NotificationService',
+        );
+        return;
+      }
+
+      // Check if the scheduled time is in the future
+      if (scheduledDateTime.isBefore(DateTime.now())) {
+        developer.log(
+          'Cannot schedule notification: time is in the past',
+          name: 'NotificationService',
+        );
+        return;
+      }
+
+      // ساخت payload برای notification
+      final payload = jsonEncode({
+        'id': id,
+        'reminderId': reminderId ?? '',
+        'title': title,
+        'body': body,
+        'soundPath': soundPath ?? '',
+      });
+
+      // برای صدا، فعلاً از صدای پیش‌فرض سیستم استفاده می‌کنیم
+      // چون استفاده از custom sound در runtime نیاز به configuration خاص دارد
+      const androidDetails = AndroidNotificationDetails(
+        'task_reminder_channel',
+        'Task Reminders',
+        channelDescription: 'Notifications for task and goal reminders',
+        importance: Importance.max,
+        priority: Priority.high,
+        playSound: true,
+        enableVibration: true,
+        fullScreenIntent: true,
+        category: AndroidNotificationCategory.alarm,
+        styleInformation: DefaultStyleInformation(true, true),
+        ticker: 'Alarm',
+        channelShowBadge: true,
+        onlyAlertOnce: false,
+        autoCancel: false,
       );
 
-      developer.log(
-        'Notification scheduled successfully for $scheduledDateTime (ID: $id)',
-        name: 'NotificationService',
+      const iosDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+        sound: 'notification.aiff',
+        interruptionLevel: InterruptionLevel.timeSensitive,
       );
+
+      final notificationDetails = NotificationDetails(
+        android: androidDetails,
+        iOS: iosDetails,
+      );
+
+      try {
+        await _notifications.zonedSchedule(
+          id,
+          title,
+          body,
+          tz.TZDateTime.from(scheduledDateTime, tz.local),
+          notificationDetails,
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
+          payload: payload,
+        );
+
+        developer.log(
+          'Notification scheduled successfully for $scheduledDateTime (ID: $id)',
+          name: 'NotificationService',
+        );
+      } catch (e) {
+        developer.log(
+          'ZonedSchedule failed, trying instant notification: $e',
+          name: 'NotificationService',
+        );
+
+        // اگر zonedSchedule شکست خورد، instant notification نمایش بده
+        await showInstantNotification(id: id, title: title, body: body);
+      }
     } catch (e) {
       developer.log(
         'Error scheduling notification: $e',
         name: 'NotificationService',
       );
+      // اگر scheduling شکست خورد، برنامه crash نکنه
     }
   }
 

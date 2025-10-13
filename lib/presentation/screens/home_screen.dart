@@ -8,6 +8,7 @@ import 'tasks/tasks_screen.dart';
 import 'goals/goals_screen.dart';
 import 'workouts/workouts_screen.dart';
 import 'settings/settings_screen.dart';
+import 'debug/notification_test_screen.dart';
 
 /// صفحه اصلی برنامه که شامل نوار ناوبری پایین و مدیریت صفحات مختلف است
 class HomeScreen extends StatefulWidget {
@@ -28,6 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
     const GoalsScreen(), // صفحه اهداف
     const WorkoutsScreen(), // صفحه تمرینات ورزشی
     const SettingsScreen(), // صفحه تنظیمات
+    const NotificationTestScreen(), // صفحه تست نوتیفیکیشن
   ];
 
   @override
@@ -83,6 +85,12 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: Icon(Icons.settings_outlined),
             selectedIcon: Icon(Icons.settings),
             label: 'تنظیمات',
+          ),
+          // آیتم تست نوتیفیکیشن
+          NavigationDestination(
+            icon: Icon(Icons.bug_report_outlined),
+            selectedIcon: Icon(Icons.bug_report),
+            label: 'تست',
           ),
         ],
       ),

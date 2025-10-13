@@ -36,13 +36,19 @@ void main() async {
   await HiveService.initialize();
 
   // راه‌اندازی سرویس نوتیفیکیشن و آلارم
-  await NotificationService().initialize();
+  try {
+    await NotificationService().initialize();
+    debugPrint('سرویس نوتیفیکیشن با موفقیت راه‌اندازی شد');
+  } catch (e) {
+    debugPrint('خطا در راه‌اندازی سرویس نوتیفیکیشن: $e');
+  }
 
   // بازنشانی همه آلارم‌های فعال (مهم برای بعد از ری‌استارت گوشی)
   // این کد تضمین می‌کند که آلارم‌ها بعد از خاموش و روشن شدن گوشی حفظ شوند
   try {
     final reminderRepository = ReminderRepository();
     await reminderRepository.rescheduleAllActiveReminders();
+    debugPrint('آلارم‌های فعال با موفقیت بازنشانی شدند');
   } catch (e) {
     debugPrint('خطا در بازنشانی آلارم‌ها در زمان شروع برنامه: $e');
   }
