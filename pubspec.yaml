@@ -41,7 +41,7 @@ dependencies:
   hive: ^2.2.3
   hive_flutter: ^1.1.0
 
-  # Background Notifications and Alarms
+  # Background Notifications (برای آلارم وقتی برنامه بسته است)
   flutter_local_notifications: ^17.0.0
   timezone: ^0.9.2
   permission_handler: ^11.0.1

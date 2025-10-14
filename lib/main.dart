@@ -36,12 +36,12 @@ void main() async {
   // راه‌اندازی پایگاه داده محلی Hive
   await HiveService.initialize();
 
-  // راه‌اندازی سرویس نوتیفیکیشن برای background alarms
+  // راه‌اندازی سرویس نوتیفیکیشن (برای آلارم در background)
   try {
     await NotificationService().initialize();
-    debugPrint('سرویس نوتیفیکیشن با موفقیت راه‌اندازی شد');
+    debugPrint('✅ سرویس نوتیفیکیشن راه‌اندازی شد');
   } catch (e) {
-    debugPrint('خطا در راه‌اندازی سرویس نوتیفیکیشن: $e');
+    debugPrint('❌ خطا در راه‌اندازی نوتیفیکیشن: $e');
   }
 
   // بازنشانی همه آلارم‌های فعال (مهم برای بعد از ری‌استارت گوشی)
@@ -74,19 +74,19 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
 
-    // تنظیم callback برای SimpleAlarmService (foreground)
+    // تنظیم callback برای SimpleAlarmService (وقتی برنامه باز است)
     SimpleAlarmService.onAlarmTriggered =
         (id, title, body, reminderId, soundPath) {
           _showAlarmScreen(id, title, body, reminderId, soundPath);
         };
 
-    // تنظیم callback برای NotificationService (background)
+    // تنظیم callback برای NotificationService (وقتی برنامه بسته/background است)
     NotificationService.onNotificationReceived = (payload) {
-      _handleNotification(payload);
+      _handleNotificationTap(payload);
     };
   }
 
-  void _handleNotification(Map<String, dynamic> payload) {
+  void _handleNotificationTap(Map<String, dynamic> payload) {
     final context = _navigatorKey.currentContext;
     if (context != null) {
       Navigator.of(context).push(

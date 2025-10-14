@@ -16,7 +16,7 @@ class NotificationService {
 
   bool _isInitialized = false;
 
-  // Callback برای handle کردن notification
+  // Callback برای handle کردن notification (وقتی روی نوتیفیکیشن کلیک می‌شود)
   static Function(Map<String, dynamic>)? onNotificationReceived;
 
   Future<void> initialize() async {
@@ -27,7 +27,7 @@ class NotificationService {
       tz.initializeTimeZones();
       tz.setLocalLocation(tz.getLocation('Asia/Tehran'));
 
-      // تنظیمات Android با fullScreenIntent
+      // تنظیمات Android
       const androidSettings = AndroidInitializationSettings(
         '@mipmap/ic_launcher',
       );
@@ -63,7 +63,7 @@ class NotificationService {
 
   void _onNotificationTapped(NotificationResponse response) {
     developer.log(
-      'Notification received: ${response.payload}',
+      'Notification tapped: ${response.payload}',
       name: 'NotificationService',
     );
 
@@ -127,6 +127,8 @@ class NotificationService {
     return true;
   }
 
+  /// زمان‌بندی نوتیفیکیشن برای background
+  /// این حتی وقتی برنامه بسته است کار می‌کند
   Future<void> scheduleNotification({
     required int id,
     required String title,
@@ -169,23 +171,24 @@ class NotificationService {
         'soundPath': soundPath ?? '',
       });
 
-      // تنظیمات Android با fullScreenIntent برای نمایش تمام صفحه
+      // تنظیمات Android با fullScreenIntent
+      // این باعث می‌شود حتی وقتی برنامه بسته است، صفحه تمام‌صفحه باز شود
       final androidDetails = AndroidNotificationDetails(
         'alarm_channel',
-        'Alarm Notifications',
-        channelDescription: 'High priority alarm notifications',
+        'آلارم‌ها',
+        channelDescription: 'نوتیفیکیشن آلارم با اولویت بالا',
         importance: Importance.max,
         priority: Priority.max,
         playSound: true,
         enableVibration: true,
-        fullScreenIntent: true, // 🔥 مهم: برای نمایش تمام صفحه
+        fullScreenIntent: true, // 🔥 کلیدی: برای باز کردن صفحه روی lock screen
         category: AndroidNotificationCategory.alarm,
         visibility: NotificationVisibility.public,
-        ticker: 'Alarm',
+        ticker: 'آلارم',
         channelShowBadge: true,
         onlyAlertOnce: false,
         autoCancel: false,
-        ongoing: true, // نوتیفیکیشن dismiss نمی‌شود
+        ongoing: true, // نوتیفیکیشن قابل dismiss نیست تا کاربر آلارم را ببیند
         styleInformation: BigTextStyleInformation(body),
       );
 
@@ -207,26 +210,22 @@ class NotificationService {
         tz.local,
       );
 
-      try {
-        await _notifications.zonedSchedule(
-          id,
-          title,
-          body,
-          scheduledDate,
-          notificationDetails,
-          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-          uiLocalNotificationDateInterpretation:
-              UILocalNotificationDateInterpretation.absoluteTime,
-          payload: payload,
-        );
+      await _notifications.zonedSchedule(
+        id,
+        title,
+        body,
+        scheduledDate,
+        notificationDetails,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        payload: payload,
+      );
 
-        developer.log(
-          'Notification scheduled successfully for $scheduledDateTime (ID: $id)',
-          name: 'NotificationService',
-        );
-      } catch (e) {
-        developer.log('Schedule failed: $e', name: 'NotificationService');
-      }
+      developer.log(
+        'Background notification scheduled for $scheduledDateTime (ID: $id)',
+        name: 'NotificationService',
+      );
     } catch (e) {
       developer.log(
         'Error scheduling notification: $e',

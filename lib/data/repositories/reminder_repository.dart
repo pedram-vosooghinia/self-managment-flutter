@@ -18,9 +18,8 @@ class ReminderRepository {
   Future<void> addReminder(ReminderModel reminder) async {
     await _box.put(reminder.id, reminder);
 
-    // Schedule using BOTH systems for reliability
     if (reminder.isActive && reminder.isUpcoming) {
-      // 1. SimpleAlarmService: برای وقتی برنامه باز است
+      // 1. SimpleAlarmService - برای وقتی برنامه باز است (سریع‌تر)
       await _simpleAlarmService.scheduleSimpleAlarm(
         id: reminder.notificationId,
         title: reminder.title,
@@ -30,7 +29,7 @@ class ReminderRepository {
         soundPath: reminder.alarmSoundPath,
       );
 
-      // 2. NotificationService: برای background و وقتی برنامه بسته است
+      // 2. NotificationService - برای background/closed (backup)
       await _notificationService.scheduleNotification(
         id: reminder.notificationId,
         title: reminder.title,
@@ -69,11 +68,10 @@ class ReminderRepository {
   Future<void> updateReminder(ReminderModel reminder) async {
     await _box.put(reminder.id, reminder);
 
-    // Cancel both alarms
+    // Cancel both
     _simpleAlarmService.cancelAlarm(reminder.notificationId);
     await _notificationService.cancelNotification(reminder.notificationId);
 
-    // Reschedule using BOTH systems
     if (reminder.isActive && reminder.isUpcoming) {
       await _simpleAlarmService.scheduleSimpleAlarm(
         id: reminder.notificationId,
@@ -161,7 +159,7 @@ class ReminderRepository {
 
     for (var reminder in activeReminders) {
       try {
-        // SimpleAlarmService for foreground
+        // Reschedule both systems
         await _simpleAlarmService.scheduleSimpleAlarm(
           id: reminder.notificationId,
           title: reminder.title,
@@ -171,7 +169,6 @@ class ReminderRepository {
           soundPath: reminder.alarmSoundPath,
         );
 
-        // NotificationService for background
         await _notificationService.scheduleNotification(
           id: reminder.notificationId,
           title: reminder.title,
