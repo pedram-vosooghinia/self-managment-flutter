@@ -11,38 +11,41 @@ class AlarmService {
   bool _isPlaying = false;
 
   Future<void> playAlarm(String? soundPath) async {
-    if (_isPlaying) {
-      await stopAlarm();
-    }
-
     try {
-      if (soundPath != null && soundPath.isNotEmpty) {
-        // Play custom sound from file
-        if (File(soundPath).existsSync()) {
-          await _audioPlayer.play(DeviceFileSource(soundPath));
-        } else {
-          // Fallback to default sound
-          await _playDefaultAlarm();
-        }
-      } else {
-        // Play default alarm sound
-        await _playDefaultAlarm();
+      // متوقف کردن صدای قبلی
+      if (_isPlaying) {
+        await stopAlarm();
       }
 
-      _isPlaying = true;
+      if (soundPath != null && soundPath.isNotEmpty && soundPath != 'default') {
+        // Play custom sound from file
+        if (File(soundPath).existsSync()) {
+          // Set to loop BEFORE playing
+          await _audioPlayer.setReleaseMode(ReleaseMode.loop);
 
-      // Set to loop
-      _audioPlayer.setReleaseMode(ReleaseMode.loop);
+          await _audioPlayer.play(DeviceFileSource(soundPath));
+          _isPlaying = true;
+
+          developer.log(
+            'Playing custom alarm sound: $soundPath',
+            name: 'AlarmService',
+          );
+        } else {
+          developer.log(
+            'Sound file not found: $soundPath - alarm will be silent',
+            name: 'AlarmService',
+          );
+        }
+      } else {
+        developer.log(
+          'Default sound selected - alarm will be silent (no sound file configured)',
+          name: 'AlarmService',
+        );
+      }
     } catch (e) {
-      developer.log('Error playing alarm: $e', name: 'AlarmService');
-      await _playDefaultAlarm();
+      developer.log('Error playing alarm sound: $e', name: 'AlarmService');
+      // در صورت خطا، صفحه را نمایش می‌دهیم ولی بدون صدا
     }
-  }
-
-  Future<void> _playDefaultAlarm() async {
-    // Play a default notification sound
-    // You'll need to add a default alarm sound to assets
-    await _audioPlayer.play(AssetSource('sounds/default_alarm.mp3'));
   }
 
   Future<void> stopAlarm() async {
