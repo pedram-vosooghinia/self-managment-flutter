@@ -53,13 +53,18 @@ class _AlarmScreenState extends State<AlarmScreen>
   }
 
   Future<void> _playAlarmSound() async {
-    if (!_isPlaying) {
-      setState(() {
-        _isPlaying = true;
-      });
+    try {
+      if (!_isPlaying) {
+        setState(() {
+          _isPlaying = true;
+        });
 
-      await _audioPlayer.setReleaseMode(ReleaseMode.loop);
-      await _audioPlayer.play(AssetSource('sounds/alarm_sound.mp3'));
+        await _audioPlayer.setReleaseMode(ReleaseMode.loop);
+        await _audioPlayer.play(AssetSource('sounds/alarm_sound.mp3'));
+        debugPrint('صدای آلارم شروع شد');
+      }
+    } catch (e) {
+      debugPrint('خطا در پخش صدای آلارم: $e');
     }
   }
 

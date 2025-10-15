@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
@@ -12,25 +13,29 @@ class NotificationService {
   static bool _isAlarmPlaying = false;
 
   static Future<void> init() async {
-    tz.initializeTimeZones();
+    try {
+      tz.initializeTimeZones();
 
-    const AndroidInitializationSettings androidSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+      const AndroidInitializationSettings androidSettings =
+          AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    const InitializationSettings settings = InitializationSettings(
-      android: androidSettings,
-    );
+      const InitializationSettings settings = InitializationSettings(
+        android: androidSettings,
+      );
 
-    await _notifications.initialize(
-      settings,
-      onDidReceiveNotificationResponse: _onNotificationTapped,
-    );
+      await _notifications.initialize(
+        settings,
+        onDidReceiveNotificationResponse: _onNotificationTapped,
+      );
 
-    // ایجاد notification channel برای Android
-    await _createNotificationChannel();
+      // ایجاد notification channel برای Android
+      await _createNotificationChannel();
 
-    // درخواست مجوزهای لازم
-    await _requestPermissions();
+      // درخواست مجوزهای لازم
+      await _requestPermissions();
+    } catch (e) {
+      debugPrint('خطا در راه‌اندازی NotificationService: $e');
+    }
   }
 
   /// مدیریت کلیک روی نوتیفیکیشن
@@ -81,11 +86,19 @@ class NotificationService {
 
   /// درخواست مجوزهای لازم برای نوتیفیکیشن و آلارم
   static Future<void> _requestPermissions() async {
-    // مجوز نوتیفیکیشن (برای Android 13+)
-    await Permission.notification.request();
+    try {
+      // مجوز نوتیفیکیشن (برای Android 13+)
+      final notificationStatus = await Permission.notification.request();
+      debugPrint('وضعیت مجوز نوتیفیکیشن: $notificationStatus');
 
-    // مجوز آلارم دقیق
-    await Permission.scheduleExactAlarm.request();
+      // مجوز آلارم دقیق
+      final alarmStatus = await Permission.scheduleExactAlarm.request();
+      debugPrint('وضعیت مجوز آلارم: $alarmStatus');
+
+      // مجوز ویبره (اختیاری - در AndroidManifest.xml تعریف شده)
+    } catch (e) {
+      debugPrint('خطا در درخواست مجوزها: $e');
+    }
   }
 
   static Future<void> showNotification({
@@ -94,52 +107,58 @@ class NotificationService {
     required DateTime scheduledDate,
     String? sound,
   }) async {
-    final androidDetails = AndroidNotificationDetails(
-      'task_channel',
-      'Task Reminders',
-      channelDescription: 'Notifications for task reminders and alarms',
-      importance: Importance.max,
-      priority: Priority.high,
-      sound: sound != null
-          ? RawResourceAndroidNotificationSound(sound)
-          : const RawResourceAndroidNotificationSound(
-              'alarm_sound',
-            ), // صدای پیش‌فرض آلارم
-      playSound: true,
-      enableVibration: true,
-      enableLights: true,
-      fullScreenIntent: true, // آلارم روی صفحه بیاد
-      category: AndroidNotificationCategory.alarm, // مشخص کردن نوع آلارم
-      visibility: NotificationVisibility.public, // نمایش روی صفحه قفل
-      ongoing: true, // نوتیفیکیشن مداوم
-      autoCancel: false, // خودکار پاک نشود
-      actions: [
-        const AndroidNotificationAction(
-          'dismiss',
-          'قطع',
-          cancelNotification: true,
-          icon: DrawableResourceAndroidBitmap('@drawable/ic_close'),
-        ),
-        const AndroidNotificationAction(
-          'snooze',
-          'چرت (5 دقیقه)',
-          cancelNotification: false,
-          icon: DrawableResourceAndroidBitmap('@drawable/ic_snooze'),
-        ),
-      ],
-    );
+    try {
+      final androidDetails = AndroidNotificationDetails(
+        'task_channel',
+        'Task Reminders',
+        channelDescription: 'Notifications for task reminders and alarms',
+        importance: Importance.max,
+        priority: Priority.high,
+        sound: sound != null
+            ? RawResourceAndroidNotificationSound(sound)
+            : const RawResourceAndroidNotificationSound(
+                'alarm_sound',
+              ), // صدای پیش‌فرض آلارم
+        playSound: true,
+        enableVibration: true,
+        enableLights: true,
+        fullScreenIntent: true, // آلارم روی صفحه بیاد
+        category: AndroidNotificationCategory.alarm, // مشخص کردن نوع آلارم
+        visibility: NotificationVisibility.public, // نمایش روی صفحه قفل
+        ongoing: true, // نوتیفیکیشن مداوم
+        autoCancel: false, // خودکار پاک نشود
+        actions: [
+          const AndroidNotificationAction(
+            'dismiss',
+            'قطع',
+            cancelNotification: true,
+            icon: DrawableResourceAndroidBitmap('@drawable/ic_close'),
+          ),
+          const AndroidNotificationAction(
+            'snooze',
+            'چرت (5 دقیقه)',
+            cancelNotification: false,
+            icon: DrawableResourceAndroidBitmap('@drawable/ic_snooze'),
+          ),
+        ],
+      );
 
-    await _notifications.zonedSchedule(
-      id.hashCode,
-      title,
-      'زمان یادآوری فرا رسیده است!',
-      tz.TZDateTime.from(scheduledDate, tz.local),
-      NotificationDetails(android: androidDetails),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-      payload: '$title|$id', // عنوان و ID تسک برای باز کردن صفحه آلارم
-    );
+      await _notifications.zonedSchedule(
+        id.hashCode,
+        title,
+        'زمان یادآوری فرا رسیده است!',
+        tz.TZDateTime.from(scheduledDate, tz.local),
+        NotificationDetails(android: androidDetails),
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        payload: '$title|$id', // عنوان و ID تسک برای باز کردن صفحه آلارم
+      );
+
+      debugPrint('آلارم برای $title در $scheduledDate تنظیم شد');
+    } catch (e) {
+      debugPrint('خطا در تنظیم آلارم: $e');
+    }
   }
 
   static Future<void> cancelNotification(String id) async {

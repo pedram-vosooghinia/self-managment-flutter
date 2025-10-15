@@ -4,8 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 // سرویس‌های اصلی برنامه
 import 'core/services/hive_service.dart';
-import 'core/services/notification_service.dart';
-import 'core/services/alarm_manager.dart';
+import 'core/services/simple_notification_service.dart';
 // مخزن‌های داده (Repositories)
 import 'data/repositories/task_repository.dart';
 // import 'data/repositories/goal_repository.dart';
@@ -26,12 +25,17 @@ void main() async {
   // اطمینان از آماده بودن Flutter قبل از اجرای کدهای async
   WidgetsFlutterBinding.ensureInitialized();
 
-  // راه‌اندازی پایگاه داده محلی Hive
-  await HiveService.initialize();
-  await NotificationService.init();
+  try {
+    // راه‌اندازی پایگاه داده محلی Hive
+    await HiveService.initialize();
+    debugPrint('HiveService راه‌اندازی شد');
 
-  // تنظیم navigator key برای AlarmManager
-  AlarmManager.navigatorKey = GlobalKey<NavigatorState>();
+    // راه‌اندازی سرویس نوتیفیکیشن ساده
+    await SimpleNotificationService.init();
+    debugPrint('SimpleNotificationService راه‌اندازی شد');
+  } catch (e) {
+    debugPrint('خطا در راه‌اندازی سرویس‌ها: $e');
+  }
 
   // اجرای برنامه اصلی
   runApp(const MyApp());
@@ -82,7 +86,6 @@ class _MyAppState extends State<MyApp> {
       ],
       child: MaterialApp(
         // ==================== تنظیمات اصلی برنامه ====================
-        navigatorKey: AlarmManager.navigatorKey,
         title: 'مدیریت شخصی',
         debugShowCheckedModeBanner: false,
 
