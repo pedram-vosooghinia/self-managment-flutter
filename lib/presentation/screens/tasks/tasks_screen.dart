@@ -36,9 +36,10 @@ class _TasksScreenState extends State<TasksScreen>
           IconButton(
             onPressed: () async {
               final taskProvider = context.read<TaskProvider>();
+              final scaffoldMessenger = ScaffoldMessenger.of(context);
               await taskProvider.testAlarm();
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
+                scaffoldMessenger.showSnackBar(
                   const SnackBar(
                     content: Text('آلارم تست برای 10 ثانیه بعد تنظیم شد'),
                     duration: Duration(seconds: 3),
