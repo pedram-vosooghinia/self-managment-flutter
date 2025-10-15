@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
 import '../../../data/models/task_model.dart';
 import '../../providers/task_provider.dart';
-import '../../providers/reminder_provider.dart';
-import '../../providers/alarm_sound_provider.dart';
-import '../../../data/models/reminder_model.dart';
-import '../alarm_sounds/alarm_sounds_screen.dart';
+import '../tasks/task_title_field.dart';
+import '../tasks/recurring_section.dart';
+import '../tasks/reminder_section.dart';
 
 class AddEditTaskScreen extends StatefulWidget {
   final TaskModel? task;
-
   const AddEditTaskScreen({super.key, this.task});
 
   @override
@@ -19,9 +16,7 @@ class AddEditTaskScreen extends StatefulWidget {
 
 class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
   late TextEditingController _titleController;
-  late TextEditingController _descriptionController;
   DateTime? _reminderDateTime;
-  String? _alarmSoundId;
   bool _isRecurring = false;
   TimeOfDay? _recurringTime;
 
@@ -29,11 +24,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.task?.title ?? '');
-    _descriptionController = TextEditingController(
-      text: widget.task?.description ?? '',
-    );
     _reminderDateTime = widget.task?.reminderDateTime;
-    _alarmSoundId = widget.task?.alarmSoundId;
     _isRecurring = widget.task?.isRecurring ?? false;
     if (widget.task?.recurringTime != null) {
       _recurringTime = TimeOfDay.fromDateTime(widget.task!.recurringTime!);
@@ -43,7 +34,6 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
   @override
   void dispose() {
     _titleController.dispose();
-    _descriptionController.dispose();
     super.dispose();
   }
 
@@ -58,136 +48,47 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
           if (isEditing)
             IconButton(
               icon: const Icon(Icons.delete),
-              onPressed: () {
-                _showDeleteDialog(context);
-              },
+              onPressed: () => _showDeleteDialog(context),
             ),
         ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          TextField(
-            controller: _titleController,
-            decoration: const InputDecoration(
-              labelText: 'عنوان',
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.title),
-            ),
-            textCapitalization: TextCapitalization.sentences,
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _descriptionController,
-            decoration: const InputDecoration(
-              labelText: 'توضیحات (اختیاری)',
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.description),
-            ),
-            maxLines: 3,
-            textCapitalization: TextCapitalization.sentences,
-          ),
-          const SizedBox(height: 16),
-          Card(
-            child: Column(
-              children: [
-                SwitchListTile(
-                  secondary: const Icon(Icons.repeat),
-                  title: const Text('تکرار روزانه'),
-                  subtitle: const Text(
-                    'این وظیفه هر روز در ساعت مشخص تکرار شود',
-                  ),
-                  value: _isRecurring,
-                  onChanged: (value) {
-                    setState(() {
-                      _isRecurring = value;
-                      if (!value) {
-                        _recurringTime = null;
-                      }
-                    });
-                  },
-                ),
-                if (_isRecurring) ...[
-                  const Divider(height: 1),
-                  ListTile(
-                    leading: const Icon(Icons.schedule),
-                    title: const Text('ساعت تکرار'),
-                    subtitle: _recurringTime != null
-                        ? Text(_recurringTime!.format(context))
-                        : const Text('انتخاب ساعت'),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: _pickRecurringTime,
-                  ),
-                  const Divider(height: 1),
-                  Consumer<AlarmSoundProvider>(
-                    builder: (context, alarmSoundProvider, child) {
-                      final selectedSound = _alarmSoundId != null
-                          ? alarmSoundProvider.getAlarmSoundById(_alarmSoundId!)
-                          : null;
-                      final soundName =
-                          selectedSound?.name ?? 'انتخاب صدای آلارم';
+          TaskTitleField(controller: _titleController),
 
-                      return ListTile(
-                        leading: const Icon(Icons.music_note),
-                        title: const Text('صدای آلارم'),
-                        subtitle: Text(soundName),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: _selectAlarmSound,
-                      );
-                    },
-                  ),
-                ],
-                if (!_isRecurring) ...[
-                  ListTile(
-                    leading: const Icon(Icons.access_time),
-                    title: const Text('یادآوری'),
-                    subtitle: _reminderDateTime != null
-                        ? Text(
-                            DateFormat(
-                              'MMM dd, yyyy - HH:mm',
-                            ).format(_reminderDateTime!),
-                          )
-                        : const Text('یادآوری ندارد'),
-                    trailing: _reminderDateTime != null
-                        ? IconButton(
-                            icon: const Icon(Icons.clear),
-                            onPressed: () {
-                              setState(() {
-                                _reminderDateTime = null;
-                                _alarmSoundId = null;
-                              });
-                            },
-                          )
-                        : null,
-                    onTap: _pickReminderDateTime,
-                  ),
-                  if (_reminderDateTime != null) ...[
-                    const Divider(height: 1),
-                    Consumer<AlarmSoundProvider>(
-                      builder: (context, alarmSoundProvider, child) {
-                        final selectedSound = _alarmSoundId != null
-                            ? alarmSoundProvider.getAlarmSoundById(
-                                _alarmSoundId!,
-                              )
-                            : null;
-                        final soundName =
-                            selectedSound?.name ?? 'انتخاب صدای آلارم';
+          const SizedBox(height: 16),
 
-                        return ListTile(
-                          leading: const Icon(Icons.music_note),
-                          title: const Text('صدای آلارم'),
-                          subtitle: Text(soundName),
-                          trailing: const Icon(Icons.chevron_right),
-                          onTap: _selectAlarmSound,
-                        );
-                      },
-                    ),
-                  ],
-                ],
-              ],
-            ),
+          // بخش انتخاب نوع وظیفه (تکراری یا یکبار)
+          SwitchListTile(
+            title: const Text('تکرار روزانه'),
+            subtitle: const Text('این وظیفه هر روز در ساعت مشخص تکرار شود'),
+            value: _isRecurring,
+            onChanged: (value) {
+              setState(() {
+                _isRecurring = value;
+                if (!value) _recurringTime = null;
+                if (value) _reminderDateTime = null;
+              });
+            },
           ),
+
+          const SizedBox(height: 8),
+
+          if (_isRecurring)
+            RecurringSection(
+              recurringTime: _recurringTime,
+              onPickTime: _pickRecurringTime,
+            )
+          else
+            ReminderSection(
+              reminderDateTime: _reminderDateTime,
+              onPickReminder: _pickReminderDateTime,
+              onClear: () => setState(() => _reminderDateTime = null),
+            ),
+
           const SizedBox(height: 24),
+
           FilledButton.icon(
             onPressed: _saveTask,
             icon: const Icon(Icons.save),
@@ -203,29 +104,27 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
       context: context,
       initialDate: _reminderDateTime ?? DateTime.now(),
       firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
+      lastDate: DateTime.now().add(const Duration(days: 730)),
     );
 
-    if (date != null && mounted) {
-      final time = await showTimePicker(
-        context: context,
-        initialTime: TimeOfDay.fromDateTime(
-          _reminderDateTime ?? DateTime.now(),
-        ),
-      );
+    if (!mounted || date == null) return;
 
-      if (time != null) {
-        setState(() {
-          _reminderDateTime = DateTime(
-            date.year,
-            date.month,
-            date.day,
-            time.hour,
-            time.minute,
-          );
-        });
-      }
-    }
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(_reminderDateTime ?? DateTime.now()),
+    );
+
+    if (!mounted || time == null) return;
+
+    setState(() {
+      _reminderDateTime = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        time.hour,
+        time.minute,
+      );
+    });
   }
 
   Future<void> _pickRecurringTime() async {
@@ -234,260 +133,88 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
       initialTime: _recurringTime ?? TimeOfDay.now(),
     );
 
-    if (time != null) {
-      setState(() {
-        _recurringTime = time;
-      });
-    }
-  }
+    if (!mounted || time == null) return;
 
-  Future<void> _selectAlarmSound() async {
-    final alarmSoundProvider = context.read<AlarmSoundProvider>();
-    final alarmSounds = alarmSoundProvider.alarmSounds;
-
-    if (alarmSounds.isEmpty) {
-      // No alarm sounds available, navigate to alarm sounds screen
-      final result = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('صدای آلارم ندارد'),
-          content: const Text(
-            'شما هیچ صدای آلارمی ندارید. آیا می‌خواهید یکی اضافه کنید؟',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('انصراف'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('اضافه کردن صدای آلارم'),
-            ),
-          ],
-        ),
-      );
-
-      if (result == true) {
-        if (!mounted) return;
-        await Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const AlarmSoundsScreen()),
-        );
-        if (!mounted) return;
-        // Reload alarm sounds after returning
-        alarmSoundProvider.loadAlarmSounds();
-      }
-      return;
-    }
-
-    // Show alarm sound picker
-    String? tempSelectedSound = _alarmSoundId;
-    final selectedSound = await showDialog<String>(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: const Text('انتخاب صدای آلارم'),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: alarmSounds.length,
-              itemBuilder: (context, index) {
-                final sound = alarmSounds[index];
-
-                final isSelected = sound.id == tempSelectedSound;
-                return ListTile(
-                  leading: Icon(
-                    sound.isSystemSound
-                        ? Icons.notifications_active
-                        : Icons.music_note,
-                  ),
-                  title: Text(sound.name),
-                  subtitle: Text(
-                    sound.isSystemSound ? 'صدای سیستم' : 'صدای سفارشی',
-                  ),
-                  trailing: isSelected ? const Icon(Icons.check) : null,
-                  onTap: () {
-                    Navigator.pop(context, sound.id);
-                  },
-                );
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('انصراف'),
-            ),
-            TextButton(
-              onPressed: () async {
-                // Navigate to add alarm sound
-                Navigator.pop(context);
-                if (!context.mounted) return;
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const AlarmSoundsScreen(),
-                  ),
-                );
-              },
-              child: const Text('مدیریت صدای آلارم'),
-            ),
-          ],
-        ),
-      ),
-    );
-
-    if (selectedSound != null) {
-      setState(() {
-        _alarmSoundId = selectedSound;
-      });
-    }
+    setState(() => _recurringTime = time);
   }
 
   Future<void> _saveTask() async {
-    if (_titleController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('لطفا عنوان وارد کنید')));
+    final title = _titleController.text.trim();
+
+    if (title.isEmpty) {
+      _showSnack('لطفا عنوان را وارد کنید');
       return;
     }
 
-    // اعتبارسنجی برای تسک تکراری
     if (_isRecurring && _recurringTime == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('لطفا ساعت تکرار را انتخاب کنید')),
-      );
+      _showSnack('لطفا ساعت تکرار را انتخاب کنید');
       return;
     }
 
-    if (_isRecurring && _alarmSoundId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('لطفا صدای آلارم را انتخاب کنید')),
-      );
+    if (!_isRecurring && _reminderDateTime == null) {
+      _showSnack('لطفا تاریخ و ساعت یادآوری را انتخاب کنید');
       return;
     }
 
-    final taskProvider = context.read<TaskProvider>();
-    final reminderProvider = context.read<ReminderProvider>();
+    final provider = context.read<TaskProvider>();
+    final now = DateTime.now();
 
-    // تبدیل _recurringTime به DateTime برای ذخیره سازی
-    DateTime? recurringDateTime;
-    if (_isRecurring && _recurringTime != null) {
-      final now = DateTime.now();
-      recurringDateTime = DateTime(
-        now.year,
-        now.month,
-        now.day,
-        _recurringTime!.hour,
-        _recurringTime!.minute,
-      );
-    }
+    final recurringDateTime = _isRecurring && _recurringTime != null
+        ? DateTime(
+            now.year,
+            now.month,
+            now.day,
+            _recurringTime!.hour,
+            _recurringTime!.minute,
+          )
+        : null;
 
     if (widget.task != null) {
-      // Update existing task
-      final updatedTask = widget.task!.copyWith(
-        title: _titleController.text.trim(),
-        description: _descriptionController.text.trim().isEmpty
-            ? null
-            : _descriptionController.text.trim(),
-        reminderDateTime: _isRecurring ? null : _reminderDateTime,
-        alarmSoundId: _alarmSoundId,
-        isRecurring: _isRecurring,
-        recurringTime: recurringDateTime,
+      await provider.updateTask(
+        widget.task!.copyWith(
+          title: title,
+          reminderDateTime: _isRecurring ? null : _reminderDateTime,
+          isRecurring: _isRecurring,
+          recurringTime: recurringDateTime,
+        ),
       );
-      taskProvider.updateTask(updatedTask);
-
-      // حذف یادآورهای قبلی غیر تکراری
-      if (!_isRecurring) {
-        final oldReminders = reminderProvider.getRemindersByItemId(
-          updatedTask.id,
-        );
-        for (var reminder in oldReminders) {
-          if (!reminder.isRecurring) {
-            await reminderProvider.deleteReminder(reminder.id);
-          }
-        }
-      }
-
-      // اضافه کردن یادآور جدید در صورت نیاز
-      if (!_isRecurring && _reminderDateTime != null && mounted) {
-        // Get the alarm sound file path from the ID
-        final alarmSoundProvider = context.read<AlarmSoundProvider>();
-        final alarmSoundPath = _alarmSoundId != null
-            ? alarmSoundProvider.getAlarmSoundById(_alarmSoundId!)?.filePath
-            : null;
-
-        await reminderProvider.addReminder(
-          itemId: updatedTask.id,
-          type: ReminderType.task,
-          scheduledDateTime: _reminderDateTime!,
-          title: 'یادآور وظیفه: ${updatedTask.title}',
-          body: updatedTask.description,
-          alarmSoundPath: alarmSoundPath,
-        );
-      }
     } else {
-      // Create new task
-      await taskProvider.addTask(
-        title: _titleController.text.trim(),
-        description: _descriptionController.text.trim().isEmpty
-            ? null
-            : _descriptionController.text.trim(),
+      await provider.addTask(
+        title: title,
         reminderDateTime: _isRecurring ? null : _reminderDateTime,
-        alarmSoundId: _alarmSoundId,
         isRecurring: _isRecurring,
         recurringTime: recurringDateTime,
       );
-
-      // اضافه کردن یادآور برای تسک جدید
-      if (!_isRecurring && _reminderDateTime != null && mounted) {
-        // Get the alarm sound file path from the ID
-        final alarmSoundProvider = context.read<AlarmSoundProvider>();
-        final alarmSoundPath = _alarmSoundId != null
-            ? alarmSoundProvider.getAlarmSoundById(_alarmSoundId!)?.filePath
-            : null;
-
-        // پیدا کردن task که الان اضافه شده
-        taskProvider.loadTasks();
-        final tasks = taskProvider.tasks;
-        final newTask = tasks.firstWhere(
-          (t) => t.title == _titleController.text.trim(),
-          orElse: () => tasks.last,
-        );
-
-        await reminderProvider.addReminder(
-          itemId: newTask.id,
-          type: ReminderType.task,
-          scheduledDateTime: _reminderDateTime!,
-          title: 'یادآور وظیفه: ${newTask.title}',
-          body: newTask.description,
-          alarmSoundPath: alarmSoundPath,
-        );
-      }
     }
 
-    if (mounted) Navigator.pop(context);
+    if (!mounted) return;
+    Navigator.pop(context);
   }
 
-  void _showDeleteDialog(BuildContext context) {
+  void _showSnack(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  void _showDeleteDialog(BuildContext dialogContext) {
+    final provider = context.read<TaskProvider>();
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (_) => AlertDialog(
         title: const Text('حذف وظیفه'),
-        content: const Text(
-          'آیا مطمئن هستید که می‌خواهید این وظیفه را حذف کنید؟',
-        ),
+        content: const Text('آیا مطمئن هستید که می‌خواهید حذف کنید؟'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('انصراف'),
           ),
           FilledButton(
-            onPressed: () {
-              context.read<TaskProvider>().deleteTask(widget.task!.id);
-              Navigator.pop(context); // Close dialog
-              Navigator.pop(context); // Close screen
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              await provider.deleteTask(widget.task!.id);
+              if (!mounted) return;
+              Navigator.pop(context);
             },
             child: const Text('حذف'),
           ),

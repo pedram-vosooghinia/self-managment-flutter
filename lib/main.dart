@@ -2,29 +2,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
-
 // سرویس‌های اصلی برنامه
 import 'core/services/hive_service.dart';
-import 'core/services/simple_alarm_service.dart';
 import 'core/services/notification_service.dart';
-
 // مخزن‌های داده (Repositories)
 import 'data/repositories/task_repository.dart';
-import 'data/repositories/goal_repository.dart';
-import 'data/repositories/reminder_repository.dart';
-import 'data/repositories/alarm_sound_repository.dart';
+// import 'data/repositories/goal_repository.dart';
 import 'data/repositories/workout_repository.dart';
 
 // مدیریت وضعیت (State Management - Providers)
+// import 'presentation/providers/goal_provider.dart';
 import 'presentation/providers/task_provider.dart';
-import 'presentation/providers/goal_provider.dart';
-import 'presentation/providers/reminder_provider.dart';
-import 'presentation/providers/alarm_sound_provider.dart';
 import 'presentation/providers/workout_provider.dart';
 
 // صفحه اصلی برنامه
 import 'presentation/screens/home_screen.dart';
-import 'presentation/screens/alarm/alarm_notification_screen.dart';
 
 // ==================== تابع اصلی برنامه ====================
 /// نقطه شروع اصلی اپلیکیشن
@@ -35,24 +27,9 @@ void main() async {
 
   // راه‌اندازی پایگاه داده محلی Hive
   await HiveService.initialize();
+  await NotificationService.init();
+ 
 
-  // راه‌اندازی سرویس نوتیفیکیشن (برای آلارم در background)
-  try {
-    await NotificationService().initialize();
-    debugPrint('✅ سرویس نوتیفیکیشن راه‌اندازی شد');
-  } catch (e) {
-    debugPrint('❌ خطا در راه‌اندازی نوتیفیکیشن: $e');
-  }
-
-  // بازنشانی همه آلارم‌های فعال (مهم برای بعد از ری‌استارت گوشی)
-  // این کد تضمین می‌کند که آلارم‌ها بعد از خاموش و روشن شدن گوشی حفظ شوند
-  try {
-    final reminderRepository = ReminderRepository();
-    await reminderRepository.rescheduleAllActiveReminders();
-    debugPrint('آلارم‌های فعال با موفقیت بازنشانی شدند');
-  } catch (e) {
-    debugPrint('خطا در بازنشانی آلارم‌ها در زمان شروع برنامه: $e');
-  }
 
   // اجرای برنامه اصلی
   runApp(const MyApp());
@@ -74,66 +51,16 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
 
-    // تنظیم callback برای SimpleAlarmService (وقتی برنامه باز است)
-    SimpleAlarmService.onAlarmTriggered =
-        (id, title, body, reminderId, soundPath) {
-          _showAlarmScreen(id, title, body, reminderId, soundPath);
-        };
 
-    // تنظیم callback برای NotificationService (وقتی برنامه بسته/background است)
-    NotificationService.onNotificationReceived = (payload) {
-      _handleNotificationTap(payload);
-    };
   }
 
-  void _handleNotificationTap(Map<String, dynamic> payload) {
-    final context = _navigatorKey.currentContext;
-    if (context != null) {
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => AlarmNotificationScreen(
-            reminderId: payload['reminderId'] ?? '',
-            title: payload['title'] ?? 'یادآور',
-            body: payload['body'],
-            alarmSoundPath: payload['soundPath'],
-          ),
-          fullscreenDialog: true,
-        ),
-      );
-    }
-  }
-
-  void _showAlarmScreen(
-    int id,
-    String title,
-    String body,
-    String? reminderId,
-    String? soundPath,
-  ) {
-    final context = _navigatorKey.currentContext;
-    if (context != null) {
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => AlarmNotificationScreen(
-            reminderId: reminderId ?? '',
-            title: title,
-            body: body,
-            alarmSoundPath: soundPath,
-          ),
-          fullscreenDialog: true,
-        ),
-      );
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     // ایجاد نمونه از مخزن‌های داده (Repositories)
     // این کلاس‌ها مسئول ارتباط با پایگاه داده هستند
     final taskRepository = TaskRepository();
-    final goalRepository = GoalRepository();
-    final reminderRepository = ReminderRepository();
-    final alarmSoundRepository = AlarmSoundRepository();
+    // final goalRepository = GoalRepository();
     final workoutRepository = WorkoutRepository();
 
     return MultiProvider(
@@ -143,28 +70,23 @@ class _MyAppState extends State<MyApp> {
         ChangeNotifierProvider(
           create: (_) => TaskProvider(
             taskRepository: taskRepository,
-            reminderRepository: reminderRepository,
-            alarmSoundRepository: alarmSoundRepository,
           ),
         ),
-        // Provider مدیریت اهداف (Goals)
-        ChangeNotifierProvider(
-          create: (_) => GoalProvider(
-            goalRepository: goalRepository,
-            reminderRepository: reminderRepository,
-          ),
-        ),
-        // Provider مدیریت یادآورها (Reminders)
-        ChangeNotifierProvider(
-          create: (_) =>
-              ReminderProvider(reminderRepository: reminderRepository),
-        ),
-        // Provider مدیریت صداهای آلارم
-        ChangeNotifierProvider(
-          create: (_) =>
-              AlarmSoundProvider(alarmSoundRepository: alarmSoundRepository)
-                ..initializeDefaultSounds(),
-        ),
+
+
+
+
+        // // Provider مدیریت اهداف (Goals)
+        // ChangeNotifierProvider(
+        //   create: (_) => GoalProvider(
+        //     goalRepository: goalRepository,
+        //   ),
+        // ),
+   
+
+
+
+
         // Provider مدیریت تمرینات ورزشی
         ChangeNotifierProvider(
           create: (_) => WorkoutProvider(workoutRepository: workoutRepository),

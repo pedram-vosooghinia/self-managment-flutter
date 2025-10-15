@@ -19,11 +19,9 @@ class TaskModelAdapter extends TypeAdapter<TaskModel> {
     return TaskModel(
       id: fields[0] as String,
       title: fields[1] as String,
-      description: fields[2] as String?,
       isCompleted: fields[3] == null ? false : fields[3] as bool, // Null check
       createdAt: fields[4] as DateTime,
       reminderDateTime: fields[6] as DateTime?,
-      alarmSoundId: fields[7] as String?,
       isRecurring: fields[8] == null ? false : fields[8] as bool, // Null check
       recurringTime: fields[9] as DateTime?,
     );
@@ -38,7 +36,6 @@ class TaskModelAdapter extends TypeAdapter<TaskModel> {
       ..writeByte(1)
       ..write(obj.title)
       ..writeByte(2)
-      ..write(obj.description)
       ..writeByte(3)
       ..write(obj.isCompleted)
       ..writeByte(4)
@@ -46,7 +43,6 @@ class TaskModelAdapter extends TypeAdapter<TaskModel> {
       ..writeByte(6)
       ..write(obj.reminderDateTime)
       ..writeByte(7)
-      ..write(obj.alarmSoundId)
       ..writeByte(8)
       ..write(obj.isRecurring)
       ..writeByte(9)

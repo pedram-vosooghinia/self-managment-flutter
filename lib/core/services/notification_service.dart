@@ -1,248 +1,97 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
-import 'package:timezone/data/latest_all.dart' as tz;
-import 'dart:developer' as developer;
-import 'dart:convert';
+import 'package:permission_handler/permission_handler.dart';
 
 class NotificationService {
-  static final NotificationService _instance = NotificationService._internal();
-  factory NotificationService() => _instance;
-  NotificationService._internal();
-
-  final FlutterLocalNotificationsPlugin _notifications =
+  static final FlutterLocalNotificationsPlugin _notifications =
       FlutterLocalNotificationsPlugin();
 
-  bool _isInitialized = false;
+  static Future<void> init() async {
+    tz.initializeTimeZones();
 
-  // Callback برای handle کردن notification (وقتی روی نوتیفیکیشن کلیک می‌شود)
-  static Function(Map<String, dynamic>)? onNotificationReceived;
+    const AndroidInitializationSettings androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
 
-  Future<void> initialize() async {
-    if (_isInitialized) return;
-
-    try {
-      // Initialize timezone
-      tz.initializeTimeZones();
-      tz.setLocalLocation(tz.getLocation('Asia/Tehran'));
-
-      // تنظیمات Android
-      const androidSettings = AndroidInitializationSettings(
-        '@mipmap/ic_launcher',
-      );
-
-      const iosSettings = DarwinInitializationSettings(
-        requestAlertPermission: true,
-        requestBadgePermission: true,
-        requestSoundPermission: true,
-      );
-
-      const initSettings = InitializationSettings(
-        android: androidSettings,
-        iOS: iosSettings,
-      );
-
-      final bool? initialized = await _notifications.initialize(
-        initSettings,
-        onDidReceiveNotificationResponse: _onNotificationTapped,
-      );
-
-      if (initialized == true) {
-        developer.log('Notification service initialized successfully');
-        await requestPermissions();
-        _isInitialized = true;
-      } else {
-        developer.log('Failed to initialize notification service');
-      }
-    } catch (e) {
-      developer.log('Error initializing notification service: $e');
-      _isInitialized = false;
-    }
-  }
-
-  void _onNotificationTapped(NotificationResponse response) {
-    developer.log(
-      'Notification tapped: ${response.payload}',
-      name: 'NotificationService',
+    const InitializationSettings settings = InitializationSettings(
+      android: androidSettings,
     );
 
-    if (response.payload != null && onNotificationReceived != null) {
-      try {
-        final payload = jsonDecode(response.payload!);
-        onNotificationReceived!(payload);
-      } catch (e) {
-        developer.log(
-          'Error parsing notification payload: $e',
-          name: 'NotificationService',
-        );
-      }
-    }
+    await _notifications.initialize(settings);
+
+    // ایجاد notification channel برای Android
+    await _createNotificationChannel();
+
+    // درخواست مجوزهای لازم
+    await _requestPermissions();
   }
 
-  Future<bool> requestPermissions() async {
-    if (kIsWeb) {
-      developer.log(
-        'Running on Web - skipping permission checks',
-        name: 'NotificationService',
-      );
-      return true;
-    }
+  /// ایجاد کانال اعلان برای Android
+  static Future<void> _createNotificationChannel() async {
+    const AndroidNotificationChannel channel = AndroidNotificationChannel(
+      'task_channel', // id
+      'Task Reminders', // name
+      description: 'Notifications for task reminders and alarms',
+      importance: Importance.max,
+      playSound: true,
+      enableVibration: true,
+      enableLights: true,
+    );
 
-    try {
-      if (await Permission.notification.isDenied) {
-        final status = await Permission.notification.request();
-        if (!status.isGranted) {
-          developer.log(
-            'Notification permission denied',
-            name: 'NotificationService',
-          );
-          return false;
-        }
-      }
-    } catch (e) {
-      developer.log(
-        'Error checking notification permission: $e',
-        name: 'NotificationService',
-      );
-    }
-
-    try {
-      if (await Permission.scheduleExactAlarm.isDenied) {
-        final status = await Permission.scheduleExactAlarm.request();
-        if (!status.isGranted) {
-          developer.log(
-            'Schedule exact alarm permission denied',
-            name: 'NotificationService',
-          );
-        }
-      }
-    } catch (e) {
-      developer.log(
-        'Error checking schedule exact alarm permission: $e',
-        name: 'NotificationService',
-      );
-    }
-
-    return true;
+    await _notifications
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >()
+        ?.createNotificationChannel(channel);
   }
 
-  /// زمان‌بندی نوتیفیکیشن برای background
-  /// این حتی وقتی برنامه بسته است کار می‌کند
-  Future<void> scheduleNotification({
-    required int id,
+  /// درخواست مجوزهای لازم برای نوتیفیکیشن و آلارم
+  static Future<void> _requestPermissions() async {
+    // مجوز نوتیفیکیشن (برای Android 13+)
+    await Permission.notification.request();
+
+    // مجوز آلارم دقیق
+    await Permission.scheduleExactAlarm.request();
+  }
+
+  static Future<void> showNotification({
+    required String id,
     required String title,
-    required String body,
-    required DateTime scheduledDateTime,
-    String? soundPath,
-    String? reminderId,
+    required DateTime scheduledDate,
+    String? sound,
   }) async {
-    if (!_isInitialized) {
-      developer.log(
-        'Cannot schedule notification: service not initialized',
-        name: 'NotificationService',
-      );
-      return;
-    }
+    final androidDetails = AndroidNotificationDetails(
+      'task_channel',
+      'Task Reminders',
+      channelDescription: 'Notifications for task reminders and alarms',
+      importance: Importance.max,
+      priority: Priority.high,
+      sound: sound != null
+          ? RawResourceAndroidNotificationSound(sound)
+          : const RawResourceAndroidNotificationSound(
+              'alarm_sound',
+            ), // صدای پیش‌فرض آلارم
+      playSound: true,
+      enableVibration: true,
+      enableLights: true,
+      fullScreenIntent: true, // آلارم روی صفحه بیاد
+      category: AndroidNotificationCategory.alarm, // مشخص کردن نوع آلارم
+      visibility: NotificationVisibility.public, // نمایش روی صفحه قفل
+    );
 
-    try {
-      final hasPermission = await requestPermissions();
-      if (!hasPermission) {
-        developer.log(
-          'Cannot schedule notification: permissions not granted',
-          name: 'NotificationService',
-        );
-        return;
-      }
-
-      if (scheduledDateTime.isBefore(DateTime.now())) {
-        developer.log(
-          'Cannot schedule notification: time is in the past',
-          name: 'NotificationService',
-        );
-        return;
-      }
-
-      final payload = jsonEncode({
-        'id': id,
-        'reminderId': reminderId ?? '',
-        'title': title,
-        'body': body,
-        'soundPath': soundPath ?? '',
-      });
-
-      // تنظیمات Android با fullScreenIntent
-      // این باعث می‌شود حتی وقتی برنامه بسته است، صفحه تمام‌صفحه باز شود
-      final androidDetails = AndroidNotificationDetails(
-        'alarm_channel',
-        'آلارم‌ها',
-        channelDescription: 'نوتیفیکیشن آلارم با اولویت بالا',
-        importance: Importance.max,
-        priority: Priority.max,
-        playSound: true,
-        enableVibration: true,
-        fullScreenIntent: true, // 🔥 کلیدی: برای باز کردن صفحه روی lock screen
-        category: AndroidNotificationCategory.alarm,
-        visibility: NotificationVisibility.public,
-        ticker: 'آلارم',
-        channelShowBadge: true,
-        onlyAlertOnce: false,
-        autoCancel: false,
-        ongoing: true, // نوتیفیکیشن قابل dismiss نیست تا کاربر آلارم را ببیند
-        styleInformation: BigTextStyleInformation(body),
-      );
-
-      const iosDetails = DarwinNotificationDetails(
-        presentAlert: true,
-        presentBadge: true,
-        presentSound: true,
-        sound: 'notification.aiff',
-        interruptionLevel: InterruptionLevel.timeSensitive,
-      );
-
-      final notificationDetails = NotificationDetails(
-        android: androidDetails,
-        iOS: iosDetails,
-      );
-
-      final tz.TZDateTime scheduledDate = tz.TZDateTime.from(
-        scheduledDateTime,
-        tz.local,
-      );
-
-      await _notifications.zonedSchedule(
-        id,
-        title,
-        body,
-        scheduledDate,
-        notificationDetails,
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
-        payload: payload,
-      );
-
-      developer.log(
-        'Background notification scheduled for $scheduledDateTime (ID: $id)',
-        name: 'NotificationService',
-      );
-    } catch (e) {
-      developer.log(
-        'Error scheduling notification: $e',
-        name: 'NotificationService',
-      );
-    }
+    await _notifications.zonedSchedule(
+      id.hashCode,
+      title,
+      'زمان یادآوری فرا رسیده است!',
+      tz.TZDateTime.from(scheduledDate, tz.local),
+      NotificationDetails(android: androidDetails),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+    );
   }
 
-  Future<void> cancelNotification(int id) async {
-    await _notifications.cancel(id);
-  }
-
-  Future<void> cancelAllNotifications() async {
-    await _notifications.cancelAll();
-  }
-
-  Future<List<PendingNotificationRequest>> getPendingNotifications() async {
-    return await _notifications.pendingNotificationRequests();
+  static Future<void> cancelNotification(String id) async {
+    await _notifications.cancel(id.hashCode);
   }
 }

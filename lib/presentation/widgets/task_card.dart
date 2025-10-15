@@ -43,18 +43,7 @@ class TaskCard extends StatelessWidget {
                             : null,
                       ),
                     ),
-                    if (task.description != null) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        task.description!,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
+                    const SizedBox(height: 4),
                     if (task.reminderDateTime != null) ...[
                       const SizedBox(height: 8),
                       Wrap(

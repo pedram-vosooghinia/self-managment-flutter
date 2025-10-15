@@ -2,13 +2,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/task_provider.dart';
-import '../providers/goal_provider.dart';
+// import '../providers/goal_provider.dart';
 import '../providers/workout_provider.dart';
 import 'tasks/tasks_screen.dart';
-import 'goals/goals_screen.dart';
+// import 'goals/goals_screen.dart';
 import 'workouts/workouts_screen.dart';
-import 'settings/settings_screen.dart';
-import 'debug/notification_test_screen.dart';
+// import 'settings/settings_screen.dart';
 
 /// صفحه اصلی برنامه که شامل نوار ناوبری پایین و مدیریت صفحات مختلف است
 class HomeScreen extends StatefulWidget {
@@ -26,10 +25,9 @@ class _HomeScreenState extends State<HomeScreen> {
   // لیست صفحات قابل نمایش در برنامه
   final List<Widget> _screens = [
     const TasksScreen(), // صفحه وظایف
-    const GoalsScreen(), // صفحه اهداف
+    // const GoalsScreen(), // صفحه اهداف
     const WorkoutsScreen(), // صفحه تمرینات ورزشی
-    const SettingsScreen(), // صفحه تنظیمات
-    const NotificationTestScreen(), // صفحه تست نوتیفیکیشن
+    // const SettingsScreen(), // صفحه تنظیمات
   ];
 
   @override
@@ -40,7 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
       // بارگذاری وظایف از دیتابیس
       context.read<TaskProvider>().loadTasks();
       // بارگذاری اهداف از دیتابیس
-      context.read<GoalProvider>().loadGoals();
+      // context.read<GoalProvider>().loadGoals();
       // بارگذاری تمرینات ورزشی از دیتابیس
       context.read<WorkoutProvider>().loadWorkouts();
     });
@@ -68,12 +66,14 @@ class _HomeScreenState extends State<HomeScreen> {
             selectedIcon: Icon(Icons.task),
             label: 'تسک‌ها',
           ),
-          // آیتم اهداف
-          NavigationDestination(
-            icon: Icon(Icons.flag_outlined),
-            selectedIcon: Icon(Icons.flag),
-            label: 'اهداف',
-          ),
+
+          // // آیتم اهداف
+          // NavigationDestination(
+          //   icon: Icon(Icons.flag_outlined),
+          //   selectedIcon: Icon(Icons.flag),
+          //   label: 'اهداف',
+          // ),
+
           // آیتم تمرینات ورزشی
           NavigationDestination(
             icon: Icon(Icons.fitness_center_outlined),
@@ -85,12 +85,6 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: Icon(Icons.settings_outlined),
             selectedIcon: Icon(Icons.settings),
             label: 'تنظیمات',
-          ),
-          // آیتم تست نوتیفیکیشن
-          NavigationDestination(
-            icon: Icon(Icons.bug_report_outlined),
-            selectedIcon: Icon(Icons.bug_report),
-            label: 'تست',
           ),
         ],
       ),

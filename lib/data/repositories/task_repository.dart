@@ -104,18 +104,14 @@ class TaskRepository {
   Future<void> toggleTaskCompletion(String id) async {
     final task = _box.get(id);
     if (task != null) {
-      task.isCompleted = !task.isCompleted;
-      await task.save();
+      final updatedTask = task.copyWith(isCompleted: !task.isCompleted);
+      await _box.put(id, updatedTask);
     }
   }
 
   // Delete
   Future<void> deleteTask(String id) async {
     await _box.delete(id);
-  }
-
-  Future<void> deleteAllTasks() async {
-    await _box.clear();
   }
 
   // Stream for real-time updates

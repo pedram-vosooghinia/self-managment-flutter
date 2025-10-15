@@ -47,7 +47,6 @@ class ExportService {
         sheet.appendRow([
           IntCellValue(rowIndex),
           TextCellValue(task.title),
-          TextCellValue(task.description ?? '-'),
           TextCellValue(task.isCompleted ? '✅ Completed' : '⏳ Pending'),
           TextCellValue(task.isRecurring ? '🔄 Daily' : '📌 Once'),
           TextCellValue(DateFormat('yyyy/MM/dd - HH:mm').format(task.createdAt)),
@@ -163,7 +162,6 @@ class ExportService {
         tasksSheet.appendRow([
           IntCellValue(taskRowIndex),
           TextCellValue(task.title),
-          TextCellValue(task.description ?? '-'),
           TextCellValue(task.isCompleted ? '✅ Completed' : '⏳ Pending'),
           TextCellValue(task.isRecurring ? '🔄 Daily' : '📌 Once'),
           TextCellValue(DateFormat('yyyy/MM/dd - HH:mm').format(task.createdAt)),
