@@ -32,6 +32,24 @@ class _TasksScreenState extends State<TasksScreen>
     return Scaffold(
       appBar: AppBar(
         title: const Text('Tasks'),
+        actions: [
+          IconButton(
+            onPressed: () async {
+              final taskProvider = context.read<TaskProvider>();
+              await taskProvider.testAlarm();
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('آلارم تست برای 10 ثانیه بعد تنظیم شد'),
+                    duration: Duration(seconds: 3),
+                  ),
+                );
+              }
+            },
+            icon: const Icon(Icons.alarm),
+            tooltip: 'تست آلارم',
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,

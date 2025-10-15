@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 // سرویس‌های اصلی برنامه
 import 'core/services/hive_service.dart';
 import 'core/services/notification_service.dart';
+import 'core/services/alarm_manager.dart';
 // مخزن‌های داده (Repositories)
 import 'data/repositories/task_repository.dart';
 // import 'data/repositories/goal_repository.dart';
@@ -28,8 +29,9 @@ void main() async {
   // راه‌اندازی پایگاه داده محلی Hive
   await HiveService.initialize();
   await NotificationService.init();
- 
 
+  // تنظیم navigator key برای AlarmManager
+  AlarmManager.navigatorKey = GlobalKey<NavigatorState>();
 
   // اجرای برنامه اصلی
   runApp(const MyApp());
@@ -45,15 +47,10 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
-
   @override
   void initState() {
     super.initState();
-
-
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -68,13 +65,8 @@ class _MyAppState extends State<MyApp> {
       providers: [
         // Provider مدیریت تسک‌ها (وظایف)
         ChangeNotifierProvider(
-          create: (_) => TaskProvider(
-            taskRepository: taskRepository,
-          ),
+          create: (_) => TaskProvider(taskRepository: taskRepository),
         ),
-
-
-
 
         // // Provider مدیریت اهداف (Goals)
         // ChangeNotifierProvider(
@@ -82,10 +74,6 @@ class _MyAppState extends State<MyApp> {
         //     goalRepository: goalRepository,
         //   ),
         // ),
-   
-
-
-
 
         // Provider مدیریت تمرینات ورزشی
         ChangeNotifierProvider(
@@ -94,7 +82,7 @@ class _MyAppState extends State<MyApp> {
       ],
       child: MaterialApp(
         // ==================== تنظیمات اصلی برنامه ====================
-        navigatorKey: _navigatorKey,
+        navigatorKey: AlarmManager.navigatorKey,
         title: 'مدیریت شخصی',
         debugShowCheckedModeBanner: false,
 

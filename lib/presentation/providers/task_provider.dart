@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 import '../../data/models/task_model.dart';
 import '../../data/repositories/task_repository.dart';
+import '../../core/services/notification_service.dart';
 
 class TaskProvider extends ChangeNotifier {
   final TaskRepository _repository;
@@ -48,12 +49,35 @@ class TaskProvider extends ChangeNotifier {
     );
 
     await _repository.addTask(task);
+
+    // تنظیم آلارم اگر زمان یادآوری مشخص شده باشد
+    if (reminderDateTime != null) {
+      await NotificationService.showNotification(
+        id: task.id,
+        title: task.title,
+        scheduledDate: reminderDateTime,
+      );
+    }
+
     loadTasks();
   }
 
   // Update task
   Future<void> updateTask(TaskModel task) async {
+    // لغو آلارم قبلی
+    await NotificationService.cancelNotification(task.id);
+
     await _repository.updateTask(task);
+
+    // تنظیم آلارم جدید اگر زمان یادآوری مشخص شده باشد
+    if (task.reminderDateTime != null) {
+      await NotificationService.showNotification(
+        id: task.id,
+        title: task.title,
+        scheduledDate: task.reminderDateTime!,
+      );
+    }
+
     loadTasks();
   }
 
@@ -65,7 +89,20 @@ class TaskProvider extends ChangeNotifier {
 
   // Delete task
   Future<void> deleteTask(String id) async {
+    // لغو آلارم قبل از حذف تسک
+    await NotificationService.cancelNotification(id);
+
     await _repository.deleteTask(id);
     loadTasks();
+  }
+
+  // تست سیستم آلارم (برای 10 ثانیه بعد)
+  Future<void> testAlarm() async {
+    final testTime = DateTime.now().add(const Duration(seconds: 10));
+    await NotificationService.showNotification(
+      id: 'test_alarm',
+      title: 'تست آلارم',
+      scheduledDate: testTime,
+    );
   }
 }
